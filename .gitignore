@@ -1,0 +1,48 @@
+# macOS
+.DS_Store
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# .NET / ASP.NET Core
+.vs/
+bin/
+obj/
+*.user
+*.suo
+
+# Secrets et configuration locale
+appsettings.Development.json
+secrets.json
+.env
+.env.*
+!.env.example
+
+# React / Node.js
+node_modules/
+dist/
+build/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# PostgreSQL
+postgres-data/
+*.dump
+*.backup
+
+# Journaux
+logs/
+*.log
+
+# Fichiers temporaires
+*.tmp
+*.temp
