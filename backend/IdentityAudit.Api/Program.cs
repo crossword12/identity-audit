@@ -1,14 +1,37 @@
+using IdentityAudit.Application.Targets;
+using IdentityAudit.Infrastructure.Persistence;
+using IdentityAudit.Infrastructure.Services;
+using IdentityAudit.Application.Audits;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json.Serialization;
+
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "La chaîne de connexion 'DefaultConnection' est absente.");
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services
+    .AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter());
+    });
+
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+builder.Services.AddScoped<ITargetService, TargetService>();
+
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
