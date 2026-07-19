@@ -177,9 +177,14 @@ public sealed class AuditService : IAuditService
                 "L'audit ne peut pas être terminé car aucune identité n'a été collectée.");
         }
 
+        var completedAt = DateTimeOffset.UtcNow;
+
         audit.Status = AuditStatus.Completed;
-        audit.CompletedAt = DateTimeOffset.UtcNow;
+        audit.CompletedAt = completedAt;
         audit.ErrorMessage = null;
+
+        audit.Target.LastCollectedAt = completedAt;
+        audit.Target.UpdatedAt = completedAt;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Targets;
 using IdentityAudit.Infrastructure.Persistence;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TargetEntity = IdentityAudit.Domain.Entities.Target;
 
@@ -83,5 +84,84 @@ public sealed class TargetService : ITargetService
             target.CreatedAt,
             target.UpdatedAt,
             target.LastCollectedAt);
+    }
+    public async Task<UpdateTargetResult> UpdateAsync(
+    Guid targetId,
+    UpdateTargetRequest request,
+    CancellationToken cancellationToken)
+    {
+        var target = await _dbContext.Targets
+            .FirstOrDefaultAsync(
+                currentTarget => currentTarget.Id == targetId,
+                cancellationToken);
+
+        if (target is null)
+        {
+            return UpdateTargetResult.Failure(
+                "La cible demandée est introuvable.");
+        }
+
+        target.Name = request.Name.Trim();
+        target.IsEnabled = request.IsEnabled;
+        target.ConfigurationJson =
+            string.IsNullOrWhiteSpace(request.ConfigurationJson)
+                ? null
+                : request.ConfigurationJson.Trim();
+
+        target.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        var targetDto = new TargetDto(
+            target.Id,
+            target.Name,
+            target.Type,
+            target.IsEnabled,
+            target.ConfigurationJson,
+            target.CreatedAt,
+            target.UpdatedAt,
+            target.LastCollectedAt);
+
+        return UpdateTargetResult.Success(targetDto);
+    }
+    public async Task<TestTargetConnectionResult> TestConnectionAsync(
+    Guid targetId,
+    CancellationToken cancellationToken)
+    {
+        var target = await _dbContext.Targets
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                currentTarget => currentTarget.Id == targetId,
+                cancellationToken);
+
+        if (target is null)
+        {
+            return TestTargetConnectionResult.NotFound(
+                "La cible demandée est introuvable.");
+        }
+
+        if (!target.IsEnabled)
+        {
+            return TestTargetConnectionResult.Failure(
+                "Le test de connexion est impossible car la cible est désactivée.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(target.ConfigurationJson))
+        {
+            try
+            {
+                using var configuration =
+                    JsonDocument.Parse(target.ConfigurationJson);
+            }
+            catch (JsonException)
+            {
+                return TestTargetConnectionResult.Failure(
+                    "La configuration JSON de la cible est invalide.");
+            }
+        }
+
+        return TestTargetConnectionResult.Success(
+            $"Test de connexion simulé réussi pour la cible " +
+            $"« {target.Name} » de type {target.Type}.");
     }
 }

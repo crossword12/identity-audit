@@ -12,4 +12,13 @@ public interface ITargetService
     Task<TargetDto> CreateAsync(
         CreateTargetRequest request,
         CancellationToken cancellationToken);
+
+    Task<UpdateTargetResult> UpdateAsync(
+        Guid targetId,
+        UpdateTargetRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<TestTargetConnectionResult> TestConnectionAsync(
+        Guid targetId,
+        CancellationToken cancellationToken = default);
 }
