@@ -23,4 +23,7 @@ public sealed class Audit
     public string? ErrorMessage { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+
+    public ICollection<DirectoryIdentity> Identities { get; set; }
+    = new List<DirectoryIdentity>();
 }

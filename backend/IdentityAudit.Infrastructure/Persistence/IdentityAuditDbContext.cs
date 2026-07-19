@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using AuditEntity = IdentityAudit.Domain.Entities.Audit;
 using TargetEntity = IdentityAudit.Domain.Entities.Target;
+using DirectoryIdentityEntity = IdentityAudit.Domain.Entities.DirectoryIdentity;
 
 namespace IdentityAudit.Infrastructure.Persistence;
 
@@ -17,12 +18,16 @@ public sealed class IdentityAuditDbContext
 
     public DbSet<AuditEntity> Audits => Set<AuditEntity>();
 
+    public DbSet<DirectoryIdentityEntity> Identities
+    => Set<DirectoryIdentityEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         ConfigureTarget(modelBuilder);
         ConfigureAudit(modelBuilder);
+        ConfigureDirectoryIdentity(modelBuilder);
     }
 
     private static void ConfigureTarget(ModelBuilder modelBuilder)
@@ -84,6 +89,65 @@ public sealed class IdentityAuditDbContext
                 .IsRequired();
 
             entity.HasIndex(audit => audit.TargetId);
+        });
+    }
+
+    private static void ConfigureDirectoryIdentity(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DirectoryIdentityEntity>(entity =>
+        {
+            entity.ToTable("Identities");
+
+            entity.HasKey(identity => identity.Id);
+
+            entity.Property(identity => identity.ExternalId)
+                .HasMaxLength(512)
+                .IsRequired();
+
+            entity.Property(identity => identity.DisplayName)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entity.Property(identity => identity.UserName)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entity.Property(identity => identity.Email)
+                .HasMaxLength(320);
+
+            entity.Property(identity => identity.Source)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(identity => identity.AccountType)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(identity => identity.Description)
+                .HasMaxLength(2000);
+
+            entity.Property(identity => identity.Owner)
+                .HasMaxLength(255);
+
+            entity.Property(identity => identity.CollectedAt)
+                .IsRequired();
+
+            entity.HasIndex(identity => identity.AuditId);
+
+            entity.HasIndex(identity => new
+            {
+                identity.AuditId,
+                identity.ExternalId
+            })
+            .IsUnique();
+
+            entity.HasOne(identity => identity.Audit)
+                .WithMany(audit => audit.Identities)
+                .HasForeignKey(identity => identity.AuditId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

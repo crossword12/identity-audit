@@ -1,0 +1,62 @@
+[
+  {
+    "externalId": "entra-user-001",
+    "displayName": "Utilisateur Entra Test",
+    "userName": "user.test@contoso.onmicrosoft.com",
+    "email": "user.test@contoso.onmicrosoft.com",
+    "source": "EntraId",
+    "accountType": "User",
+    "isEnabled": true,
+    "isPrivileged": false,
+    "isServiceAccount": false,
+    "isLocked": false,
+    "lastSignInAt": "2026-07-10T10:00:00Z",
+    "description": "Compte utilisateur fictif",
+    "owner": "Service informatique"
+  },
+  {
+    "externalId": "entra-admin-001",
+    "displayName": "Administrateur Entra Test",
+    "userName": "admin.test@contoso.onmicrosoft.com",
+    "email": "admin.test@contoso.onmicrosoft.com",
+    "source": "EntraId",
+    "accountType": "Administrator",
+    "isEnabled": true,
+    "isPrivileged": true,
+    "isServiceAccount": false,
+    "isLocked": false,
+    "lastSignInAt": "2025-10-01T10:00:00Z",
+    "description": "Compte administrateur fictif",
+    "owner": "Équipe sécurité"
+  },
+  {
+    "externalId": "entra-guest-001",
+    "displayName": "Invité Externe Test",
+    "userName": "guest.test_external.com#EXT#@contoso.onmicrosoft.com",
+    "email": "guest.test@external.com",
+    "source": "EntraId",
+    "accountType": "Guest",
+    "isEnabled": true,
+    "isPrivileged": false,
+    "isServiceAccount": false,
+    "isLocked": null,
+    "lastSignInAt": "2025-08-15T09:00:00Z",
+    "description": "Compte invité fictif",
+    "owner": "Responsable partenariat"
+  },
+  {
+    "externalId": "entra-service-001",
+    "displayName": "Service Sauvegarde Test",
+    "userName": "svc.backup@contoso.onmicrosoft.com",
+    "email": null,
+    "source": "EntraId",
+    "accountType": "ServiceAccount",
+    "isEnabled": true,
+    "isPrivileged": false,
+    "isServiceAccount": true,
+    "isLocked": null,
+    "lastSignInAt": null,
+    "description": null,
+    "owner": null
+  }
+]

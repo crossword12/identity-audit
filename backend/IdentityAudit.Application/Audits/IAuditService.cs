@@ -12,4 +12,12 @@ public interface IAuditService
     Task<CreateAuditResult> CreateAsync(
         CreateAuditRequest request,
         CancellationToken cancellationToken);
+
+    Task<StartAuditResult> StartAsync(
+    Guid auditId,
+    CancellationToken cancellationToken = default);
+
+    Task<CompleteAuditResult> CompleteAsync(
+    Guid auditId,
+    CancellationToken cancellationToken = default);
 }

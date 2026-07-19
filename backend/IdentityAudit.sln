@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Application",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Infrastructure", "IdentityAudit.Infrastructure\IdentityAudit.Infrastructure.csproj", "{343F3BD9-6EDE-4464-8D1B-A981C59321F1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.MockCollector", "..\collectors\mock-collector\IdentityAudit.MockCollector.csproj", "{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,18 @@ Global
 		{343F3BD9-6EDE-4464-8D1B-A981C59321F1}.Release|x64.Build.0 = Release|Any CPU
 		{343F3BD9-6EDE-4464-8D1B-A981C59321F1}.Release|x86.ActiveCfg = Release|Any CPU
 		{343F3BD9-6EDE-4464-8D1B-A981C59321F1}.Release|x86.Build.0 = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|x64.Build.0 = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Debug|x86.Build.0 = Debug|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x64.ActiveCfg = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x64.Build.0 = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x86.ActiveCfg = Release|Any CPU
+		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

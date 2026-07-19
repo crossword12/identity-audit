@@ -66,4 +66,44 @@ public sealed class AuditsController : ControllerBase
             new { id = result.Audit.Id },
             result.Audit);
     }
+    [HttpPost("{id:guid}/start")]
+    public async Task<IActionResult> Start(
+        Guid id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _auditService.StartAsync(
+            id,
+            cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(new
+            {
+                message = result.ErrorMessage
+            });
+        }
+
+        return Ok(result.Audit);
+    }
+
+    [HttpPost("{id:guid}/complete")]
+    public async Task<IActionResult> Complete(
+    Guid id,
+    CancellationToken cancellationToken)
+    {
+        var result = await _auditService.CompleteAsync(
+            id,
+            cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(new
+            {
+                message = result.ErrorMessage
+            });
+        }
+
+        return Ok(result.Audit);
+    }
+
 }

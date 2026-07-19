@@ -2,6 +2,7 @@ using IdentityAudit.Application.Targets;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Services;
 using IdentityAudit.Application.Audits;
+using IdentityAudit.Application.Identities;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -29,6 +30,8 @@ builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
 builder.Services.AddScoped<ITargetService, TargetService>();
 
 builder.Services.AddScoped<IAuditService, AuditService>();
+
+builder.Services.AddScoped<IIdentityService, IdentityService>();
 
 var app = builder.Build();
 
