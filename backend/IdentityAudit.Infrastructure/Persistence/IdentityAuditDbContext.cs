@@ -88,7 +88,13 @@ public sealed class IdentityAuditDbContext
             entity.Property(audit => audit.CreatedAt)
                 .IsRequired();
 
-            entity.HasIndex(audit => audit.TargetId);
+            entity.HasIndex(audit => new
+            {
+                audit.TargetId,
+                audit.CreatedAt
+            })
+                .IsDescending(false, true)
+                .HasDatabaseName("IX_Audits_TargetId_CreatedAt");
         });
     }
 
@@ -134,8 +140,6 @@ public sealed class IdentityAuditDbContext
 
             entity.Property(identity => identity.CollectedAt)
                 .IsRequired();
-
-            entity.HasIndex(identity => identity.AuditId);
 
             entity.HasIndex(identity => new
             {

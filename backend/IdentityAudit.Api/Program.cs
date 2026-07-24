@@ -2,6 +2,7 @@ using IdentityAudit.Api.Endpoints;
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.Identities;
 using IdentityAudit.Application.Targets;
+using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,7 @@ builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
 

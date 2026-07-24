@@ -9,6 +9,7 @@ public static class ApiEndpoints
         endpoints.MapTargetEndpoints();
         endpoints.MapAuditEndpoints();
         endpoints.MapIdentityEndpoints();
+        endpoints.MapDashboardEndpoints();
 
         return endpoints;
     }
