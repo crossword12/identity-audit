@@ -60,3 +60,33 @@ public sealed class ImportGroupMembershipsApiResponse
 {
     public int ImportedCount { get; init; }
 }
+
+public sealed class ImportRolesPayload
+{
+    public IReadOnlyCollection<CollectedRolePayload> Roles
+    {
+        get;
+        init;
+    } = Array.Empty<CollectedRolePayload>();
+}
+
+public sealed class ImportRolesApiResponse
+{
+    public int ImportedCount { get; init; }
+}
+
+public sealed class ImportRoleAssignmentsPayload
+{
+    public IReadOnlyCollection<
+        CollectedRoleAssignmentPayload> Assignments
+    {
+        get;
+        init;
+    } = Array.Empty<
+        CollectedRoleAssignmentPayload>();
+}
+
+public sealed class ImportRoleAssignmentsApiResponse
+{
+    public int ImportedCount { get; init; }
+}

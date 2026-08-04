@@ -123,6 +123,55 @@ public sealed class IdentityAuditApiClient
                 cancellationToken);
     }
 
+    public async Task<ImportRolesApiResponse>
+    ImportRolesAsync(
+        Guid auditId,
+        IReadOnlyCollection<CollectedRolePayload> roles,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(roles);
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"api/audits/{auditId}/roles",
+            new ImportRolesPayload
+            {
+                Roles = roles
+            },
+            _jsonOptions,
+            cancellationToken);
+
+        return await ReadRequiredResponseAsync<
+            ImportRolesApiResponse>(
+                response,
+                "importation des rôles",
+                cancellationToken);
+    }
+
+    public async Task<ImportRoleAssignmentsApiResponse>
+        ImportRoleAssignmentsAsync(
+            Guid auditId,
+            IReadOnlyCollection<
+                CollectedRoleAssignmentPayload> assignments,
+            CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(assignments);
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"api/audits/{auditId}/role-assignments",
+            new ImportRoleAssignmentsPayload
+            {
+                Assignments = assignments
+            },
+            _jsonOptions,
+            cancellationToken);
+
+        return await ReadRequiredResponseAsync<
+            ImportRoleAssignmentsApiResponse>(
+                response,
+                "importation des affectations de rôles",
+                cancellationToken);
+    }
+
     public async Task<AuditApiResponse> CompleteAuditAsync(
         Guid auditId,
         CancellationToken cancellationToken = default)

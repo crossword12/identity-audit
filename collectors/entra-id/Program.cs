@@ -151,6 +151,102 @@ try
             $"→ {membership.GroupExternalId}");
     }
 
+    Console.WriteLine();
+    Console.WriteLine(
+        "Collecte des définitions de rôles Microsoft Graph simulées...");
+
+    var graphRoleDefinitionClient =
+        new MockGraphRoleDefinitionClient();
+
+    var graphRoleDefinitions =
+        await graphRoleDefinitionClient
+            .GetAllRoleDefinitionsAsync();
+
+    var roleDefinitionMapper =
+        new GraphRoleDefinitionMapper();
+
+    var rolePayloads =
+        roleDefinitionMapper.Map(
+            graphRoleDefinitions);
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        $"{graphRoleDefinitions.Count} définition(s) de rôle récupérée(s).");
+
+    Console.WriteLine(
+        $"{rolePayloads.Count} rôle(s) normalisé(s) pour l'API.");
+
+    var knownRoleExternalIds =
+        rolePayloads
+            .Select(role => role.ExternalId)
+            .ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Collecte des affectations de rôles Microsoft Graph simulées...");
+
+    var graphRoleAssignmentClient =
+        new MockGraphRoleAssignmentClient();
+
+    var graphRoleAssignments =
+        await graphRoleAssignmentClient
+            .GetAllRoleAssignmentsAsync();
+
+    var roleAssignmentMapper =
+        new GraphRoleAssignmentMapper();
+
+    var roleAssignmentPayloads =
+        roleAssignmentMapper.Map(
+            graphRoleAssignments,
+            knownUserExternalIds,
+            knownRoleExternalIds);
+
+    Console.WriteLine();
+
+    Console.WriteLine(
+        $"{graphRoleAssignments.Count} affectation(s) Graph récupérée(s).");
+
+    Console.WriteLine(
+        $"{roleAssignmentPayloads.Count} affectation(s) normalisée(s) pour l'API.");
+
+    Console.WriteLine();
+
+    foreach (var rolePayload in rolePayloads)
+    {
+        Console.WriteLine(
+            $"- Rôle : {rolePayload.Name}");
+
+        Console.WriteLine(
+            $"  ExternalId : {rolePayload.ExternalId}");
+
+        Console.WriteLine(
+            $"  IsPrivileged : {rolePayload.IsPrivileged}");
+    }
+
+    Console.WriteLine();
+
+    foreach (var assignmentPayload in roleAssignmentPayloads)
+    {
+        Console.WriteLine(
+            "- Affectation de rôle : " +
+            $"{assignmentPayload.IdentityExternalId} " +
+            $"→ {assignmentPayload.RoleExternalId}");
+
+        Console.WriteLine(
+            $"  AssignedAt : " +
+            $"{assignmentPayload.AssignedAt?.ToString("u") ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  ExpiresAt : " +
+            $"{assignmentPayload.ExpiresAt?.ToString("u") ?? "aucune"}");
+
+        Console.WriteLine(
+            $"  IsPermanent : " +
+            $"{assignmentPayload.IsPermanent}");
+    }
+
     using var httpClient =
         new HttpClient
         {
@@ -223,6 +319,32 @@ try
     Console.WriteLine(
         $"Importation réussie : " +
         $"{membershipImportResult.ImportedCount} appartenance(s).");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Envoi des rôles vers le backend...");
+
+    var roleImportResult =
+        await apiClient.ImportRolesAsync(
+            createdAudit.Id,
+            rolePayloads);
+
+    Console.WriteLine(
+        $"Importation réussie : " +
+        $"{roleImportResult.ImportedCount} rôle(s).");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Envoi des affectations de rôles vers le backend...");
+
+    var roleAssignmentImportResult =
+        await apiClient.ImportRoleAssignmentsAsync(
+            createdAudit.Id,
+            roleAssignmentPayloads);
+
+    Console.WriteLine(
+        $"Importation réussie : " +
+        $"{roleAssignmentImportResult.ImportedCount} affectation(s) de rôle.");
 
     Console.WriteLine();
     Console.WriteLine("Finalisation de l'audit...");

@@ -1,0 +1,20 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleDefinitions",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/roleManagement/directory/roleDefinitions?$skiptoken=role-definitions-page-2",
+  "value": [
+    {
+      "id": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "displayName": "Administrateur général",
+      "description": "Rôle simulé disposant de tous les privilèges",
+      "isBuiltIn": true,
+      "isEnabled": true
+    },
+    {
+      "id": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "displayName": "Administrateur des utilisateurs",
+      "description": "Rôle simulé pour la gestion des utilisateurs",
+      "isBuiltIn": true,
+      "isEnabled": true
+    }
+  ]
+}

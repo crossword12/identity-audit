@@ -1,0 +1,12 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleDefinitions",
+  "value": [
+    {
+      "id": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+      "displayName": "Lecteur des rapports",
+      "description": "Rôle simulé disposant uniquement d’un accès en lecture",
+      "isBuiltIn": true,
+      "isEnabled": true
+    }
+  ]
+}

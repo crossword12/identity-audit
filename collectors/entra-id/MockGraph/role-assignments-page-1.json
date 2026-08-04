@@ -1,0 +1,22 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#roleManagement/directory/roleAssignmentScheduleInstances",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/roleManagement/directory/roleAssignmentScheduleInstances?$skiptoken=role-assignments-page-2",
+  "value": [
+    {
+      "id": "assignment-11111111-dddddddd",
+      "principalId": "11111111-1111-1111-1111-111111111111",
+      "roleDefinitionId": "dddddddd-dddd-dddd-dddd-dddddddddddd",
+      "directoryScopeId": "/",
+      "startDateTime": "2026-07-01T10:00:00Z",
+      "endDateTime": null
+    },
+    {
+      "id": "assignment-44444444-eeeeeeee",
+      "principalId": "44444444-4444-4444-4444-444444444444",
+      "roleDefinitionId": "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee",
+      "directoryScopeId": "/",
+      "startDateTime": "2026-06-15T09:00:00Z",
+      "endDateTime": null
+    }
+  ]
+}
