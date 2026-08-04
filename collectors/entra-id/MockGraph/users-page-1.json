@@ -1,0 +1,30 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users(id,displayName,userPrincipalName,mail,userType,accountEnabled,employeeType,signInActivity)",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/users?$skiptoken=page-2",
+  "value": [
+    {
+      "id": "11111111-1111-1111-1111-111111111111",
+      "displayName": "Sara Benali",
+      "userPrincipalName": "sara.benali@identityauditlab.onmicrosoft.com",
+      "mail": "sara.benali@identityauditlab.onmicrosoft.com",
+      "userType": "Member",
+      "accountEnabled": true,
+      "employeeType": "Employee",
+      "signInActivity": {
+        "lastSuccessfulSignInDateTime": "2026-07-30T08:15:00Z"
+      }
+    },
+    {
+      "id": "22222222-2222-2222-2222-222222222222",
+      "displayName": "Invité Partenaire",
+      "userPrincipalName": "invite_partenaire.com#EXT#@identityauditlab.onmicrosoft.com",
+      "mail": "invite@partenaire.com",
+      "userType": "Guest",
+      "accountEnabled": true,
+      "employeeType": null,
+      "signInActivity": {
+        "lastSuccessfulSignInDateTime": "2025-08-15T09:00:00Z"
+      }
+    }
+  ]
+}

@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.MockCollector", "..\collectors\mock-collector\IdentityAudit.MockCollector.csproj", "{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.EntraCollector", "..\collectors\entra-id\IdentityAudit.EntraCollector.csproj", "{94646F35-5D0C-49E9-ABF6-63C44690D3B3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -83,6 +85,18 @@ Global
 		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x64.Build.0 = Release|Any CPU
 		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x86.ActiveCfg = Release|Any CPU
 		{CCE2E471-A0C7-4943-BAF2-14BFFBD397A1}.Release|x86.Build.0 = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|x64.Build.0 = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Debug|x86.Build.0 = Debug|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x64.ActiveCfg = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x64.Build.0 = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x86.ActiveCfg = Release|Any CPU
+		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

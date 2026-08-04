@@ -1,0 +1,27 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#users(id,displayName,userPrincipalName,mail,userType,accountEnabled,employeeType,signInActivity)",
+  "value": [
+    {
+      "id": "33333333-3333-3333-3333-333333333333",
+      "displayName": "Compte Désactivé",
+      "userPrincipalName": "ancien.utilisateur@identityauditlab.onmicrosoft.com",
+      "mail": "ancien.utilisateur@identityauditlab.onmicrosoft.com",
+      "userType": "Member",
+      "accountEnabled": false,
+      "employeeType": "Employee",
+      "signInActivity": {
+        "lastSuccessfulSignInDateTime": "2025-01-10T11:30:00Z"
+      }
+    },
+    {
+      "id": "44444444-4444-4444-4444-444444444444",
+      "displayName": "Service Sauvegarde",
+      "userPrincipalName": "svc.backup@identityauditlab.onmicrosoft.com",
+      "mail": null,
+      "userType": "Member",
+      "accountEnabled": true,
+      "employeeType": "ServiceAccount",
+      "signInActivity": null
+    }
+  ]
+}
