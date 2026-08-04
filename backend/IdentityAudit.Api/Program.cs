@@ -8,6 +8,7 @@ using IdentityAudit.Application.Roles;
 using IdentityAudit.Application.RoleAssignments;
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Infrastructure.Persistence;
+using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
@@ -50,6 +51,21 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext =
+        scope.ServiceProvider
+            .GetRequiredService<IdentityAuditDbContext>();
+
+    var insertedRuleCount =
+        await AuditRuleCatalogSeeder.SeedAsync(
+            dbContext);
+
+    Console.WriteLine(
+        "Catalogue CIS initialisé : " +
+        $"{insertedRuleCount} nouvelle(s) règle(s) ajoutée(s).");
+}
 
 if (app.Environment.IsDevelopment())
 {
