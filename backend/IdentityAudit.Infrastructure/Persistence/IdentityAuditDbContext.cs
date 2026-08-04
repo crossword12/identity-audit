@@ -9,6 +9,11 @@ using DirectoryRoleEntity =
 
 using RoleAssignmentEntity =
     IdentityAudit.Domain.Entities.RoleAssignment;
+using AuditRuleEntity =
+    IdentityAudit.Domain.Entities.AuditRule;
+
+using RuleEvaluationEntity =
+    IdentityAudit.Domain.Entities.RuleEvaluation;
 
 namespace IdentityAudit.Infrastructure.Persistence;
 
@@ -40,6 +45,12 @@ public sealed class IdentityAuditDbContext
     public DbSet<RoleAssignmentEntity> RoleAssignments =>
         Set<RoleAssignmentEntity>();
 
+    public DbSet<AuditRuleEntity> AuditRules =>
+    Set<AuditRuleEntity>();
+
+    public DbSet<RuleEvaluationEntity> RuleEvaluations =>
+        Set<RuleEvaluationEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -49,6 +60,8 @@ public sealed class IdentityAuditDbContext
         ConfigureDirectoryIdentity(modelBuilder);
         ConfigureDirectoryGroup(modelBuilder);
         ConfigureGroupMembership(modelBuilder);
+        ConfigureAuditRule(modelBuilder);
+        ConfigureRuleEvaluation(modelBuilder);
 
         modelBuilder.Entity<DirectoryRoleEntity>(entity =>
 {
@@ -344,6 +357,112 @@ public sealed class IdentityAuditDbContext
                 .HasForeignKey(membership =>
                     membership.GroupId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
+
+    private static void ConfigureAuditRule(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AuditRuleEntity>(entity =>
+        {
+            entity.ToTable("AuditRules");
+
+            entity.HasKey(rule => rule.Id);
+
+            entity.Property(rule => rule.Code)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(rule => rule.Name)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entity.Property(rule => rule.Description)
+                .HasMaxLength(2000)
+                .IsRequired();
+
+            entity.Property(rule => rule.CisControl)
+                .HasMaxLength(50)
+                .IsRequired();
+
+            entity.Property(rule => rule.TargetType)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(rule => rule.Severity)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(rule => rule.Recommendation)
+                .HasMaxLength(2000)
+                .IsRequired();
+
+            entity.Property(rule => rule.IsEnabled)
+                .IsRequired();
+
+            entity.Property(rule => rule.CreatedAt)
+                .IsRequired();
+
+            entity.Property(rule => rule.UpdatedAt)
+                .IsRequired();
+
+            entity.HasIndex(rule => rule.Code)
+                .IsUnique()
+                .HasDatabaseName(
+                    "IX_AuditRules_Code");
+        });
+    }
+
+    private static void ConfigureRuleEvaluation(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RuleEvaluationEntity>(entity =>
+        {
+            entity.ToTable("RuleEvaluations");
+
+            entity.HasKey(evaluation => evaluation.Id);
+
+            entity.Property(evaluation => evaluation.Status)
+                .HasConversion<string>()
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(evaluation => evaluation.FindingCount)
+                .IsRequired();
+
+            entity.Property(evaluation => evaluation.EvidenceJson)
+                .HasColumnType("jsonb");
+
+            entity.Property(evaluation => evaluation.Recommendation)
+                .HasMaxLength(2000);
+
+            entity.Property(evaluation => evaluation.ErrorMessage)
+                .HasColumnType("text");
+
+            entity.Property(evaluation => evaluation.EvaluatedAt)
+                .IsRequired();
+
+            entity.HasIndex(evaluation => new
+            {
+                evaluation.AuditId,
+                evaluation.AuditRuleId
+            })
+                .IsUnique()
+                .HasDatabaseName(
+                    "IX_RuleEvaluations_AuditId_AuditRuleId");
+
+            entity.HasOne(evaluation => evaluation.Audit)
+                .WithMany(audit => audit.RuleEvaluations)
+                .HasForeignKey(evaluation => evaluation.AuditId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(evaluation => evaluation.AuditRule)
+                .WithMany(rule => rule.Evaluations)
+                .HasForeignKey(evaluation =>
+                    evaluation.AuditRuleId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

@@ -32,4 +32,7 @@ public sealed class Audit
 
     public ICollection<DirectoryRole> Roles { get; set; }
     = new List<DirectoryRole>();
+
+    public ICollection<RuleEvaluation> RuleEvaluations { get; set; }
+    = new List<RuleEvaluation>();
 }
