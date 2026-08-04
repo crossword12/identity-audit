@@ -29,4 +29,7 @@ public sealed class Audit
 
     public ICollection<DirectoryGroup> Groups { get; set; }
     = new List<DirectoryGroup>();
+
+    public ICollection<DirectoryRole> Roles { get; set; }
+    = new List<DirectoryRole>();
 }

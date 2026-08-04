@@ -11,6 +11,8 @@ public static class ApiEndpoints
         endpoints.MapIdentityEndpoints();
         endpoints.MapDirectoryGroupEndpoints();
         endpoints.MapGroupMembershipEndpoints();
+        endpoints.MapDirectoryRoleEndpoints();
+        endpoints.MapRoleAssignmentEndpoints();
         endpoints.MapDashboardEndpoints();
 
         return endpoints;

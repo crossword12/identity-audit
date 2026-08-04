@@ -4,6 +4,11 @@ using TargetEntity = IdentityAudit.Domain.Entities.Target;
 using DirectoryIdentityEntity = IdentityAudit.Domain.Entities.DirectoryIdentity;
 using DirectoryGroupEntity = IdentityAudit.Domain.Entities.DirectoryGroup;
 using GroupMembershipEntity = IdentityAudit.Domain.Entities.GroupMembership;
+using DirectoryRoleEntity =
+    IdentityAudit.Domain.Entities.DirectoryRole;
+
+using RoleAssignmentEntity =
+    IdentityAudit.Domain.Entities.RoleAssignment;
 
 namespace IdentityAudit.Infrastructure.Persistence;
 
@@ -29,6 +34,12 @@ public sealed class IdentityAuditDbContext
     public DbSet<GroupMembershipEntity> GroupMemberships
         => Set<GroupMembershipEntity>();
 
+    public DbSet<DirectoryRoleEntity> DirectoryRoles =>
+    Set<DirectoryRoleEntity>();
+
+    public DbSet<RoleAssignmentEntity> RoleAssignments =>
+        Set<RoleAssignmentEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -38,6 +49,82 @@ public sealed class IdentityAuditDbContext
         ConfigureDirectoryIdentity(modelBuilder);
         ConfigureDirectoryGroup(modelBuilder);
         ConfigureGroupMembership(modelBuilder);
+
+        modelBuilder.Entity<DirectoryRoleEntity>(entity =>
+{
+    entity.ToTable("DirectoryRoles");
+
+    entity.HasKey(role => role.Id);
+
+    entity.Property(role => role.ExternalId)
+        .HasMaxLength(512)
+        .IsRequired();
+
+    entity.Property(role => role.Name)
+        .HasMaxLength(255)
+        .IsRequired();
+
+    entity.Property(role => role.Description)
+        .HasMaxLength(2000);
+
+    entity.Property(role => role.Source)
+        .HasConversion<string>()
+        .HasMaxLength(30)
+        .IsRequired();
+
+    entity.Property(role => role.IsPrivileged)
+        .IsRequired();
+
+    entity.Property(role => role.CollectedAt)
+        .IsRequired();
+
+    entity.HasIndex(role => new
+    {
+        role.AuditId,
+        role.ExternalId
+    })
+        .IsUnique();
+
+    entity.HasOne(role => role.Audit)
+        .WithMany(audit => audit.Roles)
+        .HasForeignKey(role => role.AuditId)
+        .OnDelete(DeleteBehavior.Cascade);
+});
+
+        modelBuilder.Entity<RoleAssignmentEntity>(entity =>
+        {
+            entity.ToTable("RoleAssignments");
+
+            entity.HasKey(assignment => assignment.Id);
+
+            entity.Property(assignment => assignment.AssignedAt);
+
+            entity.Property(assignment => assignment.ExpiresAt);
+
+            entity.Property(assignment => assignment.IsPermanent)
+                .IsRequired();
+
+            entity.Property(assignment => assignment.CollectedAt)
+                .IsRequired();
+
+            entity.HasIndex(assignment => new
+            {
+                assignment.IdentityId,
+                assignment.DirectoryRoleId
+            })
+                .IsUnique();
+
+            entity.HasOne(assignment => assignment.Identity)
+                .WithMany(identity => identity.RoleAssignments)
+                .HasForeignKey(assignment => assignment.IdentityId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(assignment => assignment.DirectoryRole)
+                .WithMany(role => role.Assignments)
+                .HasForeignKey(assignment =>
+                    assignment.DirectoryRoleId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
     }
 
     private static void ConfigureTarget(ModelBuilder modelBuilder)

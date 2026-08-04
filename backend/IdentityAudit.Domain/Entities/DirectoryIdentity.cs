@@ -41,4 +41,7 @@ public sealed class DirectoryIdentity
 
     public ICollection<GroupMembership> GroupMemberships { get; set; }
     = new List<GroupMembership>();
+
+    public ICollection<RoleAssignment> RoleAssignments { get; set; }
+    = new List<RoleAssignment>();
 }
