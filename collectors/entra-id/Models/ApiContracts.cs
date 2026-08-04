@@ -31,3 +31,32 @@ public sealed class ImportIdentitiesApiResponse
 {
     public int ImportedCount { get; init; }
 }
+
+public sealed class ImportGroupsPayload
+{
+    public IReadOnlyCollection<CollectedGroupPayload> Groups
+    {
+        get;
+        init;
+    } = Array.Empty<CollectedGroupPayload>();
+}
+
+public sealed class ImportGroupsApiResponse
+{
+    public int ImportedCount { get; init; }
+}
+
+public sealed class ImportGroupMembershipsPayload
+{
+    public IReadOnlyCollection<CollectedGroupMembershipPayload>
+        Memberships
+    {
+        get;
+        init;
+    } = Array.Empty<CollectedGroupMembershipPayload>();
+}
+
+public sealed class ImportGroupMembershipsApiResponse
+{
+    public int ImportedCount { get; init; }
+}

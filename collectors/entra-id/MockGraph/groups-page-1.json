@@ -1,0 +1,26 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName,description,groupTypes,mailEnabled,securityEnabled,isAssignableToRole)",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/groups?$skiptoken=groups-page-2",
+  "value": [
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+      "displayName": "Équipe Sécurité",
+      "description": "Groupe de sécurité interne",
+      "groupTypes": [],
+      "mailEnabled": false,
+      "securityEnabled": true,
+      "isAssignableToRole": false
+    },
+    {
+      "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+      "displayName": "Partenaires Externes",
+      "description": "Groupe destiné aux utilisateurs invités",
+      "groupTypes": [
+        "Unified"
+      ],
+      "mailEnabled": true,
+      "securityEnabled": false,
+      "isAssignableToRole": false
+    }
+  ]
+}

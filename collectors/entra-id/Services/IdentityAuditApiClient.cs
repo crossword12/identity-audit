@@ -76,6 +76,53 @@ public sealed class IdentityAuditApiClient
             cancellationToken);
     }
 
+    public async Task<ImportGroupsApiResponse> ImportGroupsAsync(
+    Guid auditId,
+    IReadOnlyCollection<CollectedGroupPayload> groups,
+    CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(groups);
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"api/audits/{auditId}/groups",
+            new ImportGroupsPayload
+            {
+                Groups = groups
+            },
+            _jsonOptions,
+            cancellationToken);
+
+        return await ReadRequiredResponseAsync<ImportGroupsApiResponse>(
+            response,
+            "importation des groupes",
+            cancellationToken);
+    }
+
+    public async Task<ImportGroupMembershipsApiResponse>
+        ImportGroupMembershipsAsync(
+            Guid auditId,
+            IReadOnlyCollection<CollectedGroupMembershipPayload>
+                memberships,
+            CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(memberships);
+
+        var response = await _httpClient.PostAsJsonAsync(
+            $"api/audits/{auditId}/group-memberships",
+            new ImportGroupMembershipsPayload
+            {
+                Memberships = memberships
+            },
+            _jsonOptions,
+            cancellationToken);
+
+        return await ReadRequiredResponseAsync<
+            ImportGroupMembershipsApiResponse>(
+                response,
+                "importation des appartenances aux groupes",
+                cancellationToken);
+    }
+
     public async Task<AuditApiResponse> CompleteAuditAsync(
         Guid auditId,
         CancellationToken cancellationToken = default)

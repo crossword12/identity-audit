@@ -1,0 +1,14 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#groups(id,displayName,description,groupTypes,mailEnabled,securityEnabled,isAssignableToRole)",
+  "value": [
+    {
+      "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      "displayName": "Administrateurs de l'identité",
+      "description": "Groupe simulé possédant des privilèges élevés",
+      "groupTypes": [],
+      "mailEnabled": false,
+      "securityEnabled": true,
+      "isAssignableToRole": true
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#directoryObjects",
+  "@odata.nextLink": "https://graph.microsoft.com/v1.0/groups/aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa/members?$skiptoken=members-page-2",
+  "value": [
+    {
+      "@odata.type": "#microsoft.graph.user",
+      "id": "11111111-1111-1111-1111-111111111111",
+      "displayName": "Sara Benali",
+      "userPrincipalName": "sara.benali@identityauditlab.onmicrosoft.com"
+    }
+  ]
+}
