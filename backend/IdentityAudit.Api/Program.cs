@@ -2,6 +2,8 @@ using IdentityAudit.Api.Endpoints;
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.Identities;
 using IdentityAudit.Application.Targets;
+using IdentityAudit.Application.Groups;
+using IdentityAudit.Application.GroupMemberships;
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Services;
@@ -31,6 +33,12 @@ builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IIdentityService, IdentityService>();
+builder.Services.AddScoped<
+    IDirectoryGroupService,
+    DirectoryGroupService>();
+builder.Services.AddScoped<
+    IGroupMembershipService,
+    GroupMembershipService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();

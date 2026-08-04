@@ -38,4 +38,7 @@ public sealed class DirectoryIdentity
 
     public DateTimeOffset CollectedAt { get; set; }
         = DateTimeOffset.UtcNow;
+
+    public ICollection<GroupMembership> GroupMemberships { get; set; }
+    = new List<GroupMembership>();
 }

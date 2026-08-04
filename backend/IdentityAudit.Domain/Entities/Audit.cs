@@ -26,4 +26,7 @@ public sealed class Audit
 
     public ICollection<DirectoryIdentity> Identities { get; set; }
     = new List<DirectoryIdentity>();
+
+    public ICollection<DirectoryGroup> Groups { get; set; }
+    = new List<DirectoryGroup>();
 }

@@ -9,6 +9,8 @@ public static class ApiEndpoints
         endpoints.MapTargetEndpoints();
         endpoints.MapAuditEndpoints();
         endpoints.MapIdentityEndpoints();
+        endpoints.MapDirectoryGroupEndpoints();
+        endpoints.MapGroupMembershipEndpoints();
         endpoints.MapDashboardEndpoints();
 
         return endpoints;
