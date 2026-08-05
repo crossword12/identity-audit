@@ -90,3 +90,22 @@ public sealed class ImportRoleAssignmentsApiResponse
 {
     public int ImportedCount { get; init; }
 }
+
+public sealed class EvaluateAuditRulesApiResponse
+{
+    public Guid AuditId { get; init; }
+
+    public int EvaluatedRuleCount { get; init; }
+
+    public int CompliantCount { get; init; }
+
+    public int NonCompliantCount { get; init; }
+
+    public int NotApplicableCount { get; init; }
+
+    public int NotVerifiableCount { get; init; }
+
+    public int ErrorCount { get; init; }
+
+    public decimal? ComplianceScore { get; init; }
+}

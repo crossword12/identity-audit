@@ -218,4 +218,20 @@ public sealed class IdentityAuditApiClient
 
         return result;
     }
+    public async Task<EvaluateAuditRulesApiResponse>
+    EvaluateAuditRulesAsync(
+        Guid auditId,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient.PostAsync(
+            $"api/audits/{auditId}/evaluate",
+            content: null,
+            cancellationToken);
+
+        return await ReadRequiredResponseAsync<
+            EvaluateAuditRulesApiResponse>(
+                response,
+                "évaluation des règles CIS",
+                cancellationToken);
+    }
 }
