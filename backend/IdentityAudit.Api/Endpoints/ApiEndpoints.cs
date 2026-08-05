@@ -13,6 +13,7 @@ public static class ApiEndpoints
         endpoints.MapGroupMembershipEndpoints();
         endpoints.MapDirectoryRoleEndpoints();
         endpoints.MapRoleAssignmentEndpoints();
+        endpoints.MapRuleEvaluationEndpoints();
         endpoints.MapDashboardEndpoints();
 
         return endpoints;

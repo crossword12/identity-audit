@@ -6,6 +6,7 @@ using IdentityAudit.Application.Groups;
 using IdentityAudit.Application.GroupMemberships;
 using IdentityAudit.Application.Roles;
 using IdentityAudit.Application.RoleAssignments;
+using IdentityAudit.Application.RuleEvaluations;
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
@@ -48,6 +49,9 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IRoleAssignmentService,
     RoleAssignmentService>();
+builder.Services.AddScoped<
+    IAuditRuleEvaluationService,
+    AuditRuleEvaluationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 
 var app = builder.Build();
