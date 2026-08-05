@@ -33,4 +33,30 @@ public sealed class DashboardAuditDto
     public long GuestAccounts { get; set; }
 
     public long LockedAccounts { get; set; }
+
+    public long EvaluatedRules { get; set; }
+
+    public long CompliantRules { get; set; }
+
+    public long NonCompliantRules { get; set; }
+
+    public long NotApplicableRules { get; set; }
+
+    public long NotVerifiableRules { get; set; }
+
+    public long ErrorRules { get; set; }
+
+    public long TotalFindings { get; set; }
+
+    public long CriticalFindings { get; set; }
+
+    public long HighFindings { get; set; }
+
+    public long MediumFindings { get; set; }
+
+    public long LowFindings { get; set; }
+
+    public long CisControl5Findings { get; set; }
+
+    public long CisControl6Findings { get; set; }
 }
