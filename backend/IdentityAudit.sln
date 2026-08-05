@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.MockCollector
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.EntraCollector", "..\collectors\entra-id\IdentityAudit.EntraCollector.csproj", "{94646F35-5D0C-49E9-ABF6-63C44690D3B3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.ActiveDirectoryCollector", "..\collectors\active-directory\IdentityAudit.ActiveDirectoryCollector.csproj", "{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -97,6 +99,18 @@ Global
 		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x64.Build.0 = Release|Any CPU
 		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x86.ActiveCfg = Release|Any CPU
 		{94646F35-5D0C-49E9-ABF6-63C44690D3B3}.Release|x86.Build.0 = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|x64.Build.0 = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Debug|x86.Build.0 = Debug|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x64.ActiveCfg = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x64.Build.0 = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x86.ActiveCfg = Release|Any CPU
+		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
