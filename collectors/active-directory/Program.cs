@@ -65,6 +65,104 @@ try
 
     Console.WriteLine(
         $"Base DN validé : {result.ConfiguredBaseDn}");
+    Console.WriteLine();
+    Console.WriteLine(
+        "Collecte des utilisateurs Active Directory...");
+
+    var userCollector =
+        new ActiveDirectoryUserCollector(
+            options);
+
+    var users =
+        userCollector.Collect();
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"{users.Count} utilisateur(s) Active Directory récupéré(s).");
+
+    Console.WriteLine();
+
+    foreach (var user in users)
+    {
+        Console.WriteLine(
+            $"- {user.SamAccountName}");
+
+        Console.WriteLine(
+            $"  ObjectGuid : {user.ObjectGuid}");
+
+        Console.WriteLine(
+            $"  UPN : " +
+            $"{user.UserPrincipalName ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  DisplayName : " +
+            $"{user.DisplayName ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  UserAccountControl : " +
+            $"{user.UserAccountControl}");
+
+        Console.WriteLine(
+            $"  ComputedUAC : " +
+            $"{user.ComputedUserAccountControl?.ToString() ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  LastLogon : " +
+            $"{user.LastLogonAt?.ToString("u") ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  SPN : {user.ServicePrincipalNames.Count}");
+    }
+    Console.WriteLine();
+    Console.WriteLine(
+        "Normalisation des utilisateurs pour l'API...");
+
+    var userMapper =
+        new ActiveDirectoryUserMapper();
+
+    var identities =
+        userMapper.Map(users);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"{identities.Count} identité(s) Active Directory normalisée(s).");
+
+    Console.WriteLine();
+
+    foreach (var identity in identities)
+    {
+        Console.WriteLine(
+            $"- {identity.UserName}");
+
+        Console.WriteLine(
+            $"  ExternalId : {identity.ExternalId}");
+
+        Console.WriteLine(
+            $"  DisplayName : {identity.DisplayName}");
+
+        Console.WriteLine(
+            $"  Source : {identity.Source}");
+
+        Console.WriteLine(
+            $"  AccountType : {identity.AccountType}");
+
+        Console.WriteLine(
+            $"  IsEnabled : {identity.IsEnabled}");
+
+        Console.WriteLine(
+            $"  IsLocked : " +
+            $"{identity.IsLocked?.ToString() ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  IsServiceAccount : {identity.IsServiceAccount}");
+
+        Console.WriteLine(
+            $"  IsPrivileged : {identity.IsPrivileged}");
+
+        Console.WriteLine(
+            $"  LastSignInAt : " +
+            $"{identity.LastSignInAt?.ToString("u") ?? "indisponible"}");
+    }
 
     return 0;
 }
