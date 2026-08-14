@@ -163,6 +163,47 @@ try
             $"  LastSignInAt : " +
             $"{identity.LastSignInAt?.ToString("u") ?? "indisponible"}");
     }
+    Console.WriteLine();
+    Console.WriteLine(
+        "Collecte des groupes Active Directory...");
+
+    var groupCollector =
+        new ActiveDirectoryGroupCollector(
+            options);
+
+    var adGroups =
+        groupCollector.Collect();
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"{adGroups.Count} groupe(s) Active Directory récupéré(s).");
+
+    var groupMapper =
+        new ActiveDirectoryGroupMapper();
+
+    var groups =
+        groupMapper.Map(
+            adGroups);
+
+    Console.WriteLine(
+        $"{groups.Count} groupe(s) normalisé(s) pour l'API.");
+
+    Console.WriteLine();
+
+    foreach (var group in groups)
+    {
+        Console.WriteLine(
+            $"- {group.Name}");
+
+        Console.WriteLine(
+            $"  ExternalId : {group.ExternalId}");
+
+        Console.WriteLine(
+            $"  GroupType : {group.GroupType}");
+
+        Console.WriteLine(
+            $"  IsPrivileged : {group.IsPrivileged}");
+    }
 
     return 0;
 }
