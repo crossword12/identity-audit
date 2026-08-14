@@ -25,7 +25,7 @@ public sealed class ActiveDirectoryConnectionTester
             new LdapDirectoryIdentifier(
                 _options.Host,
                 _options.Port,
-                fullyQualifiedDnsHostName: false,
+                fullyQualifiedDnsHostName: true,
                 connectionless: false);
 
         var credentials =
@@ -47,50 +47,78 @@ public sealed class ActiveDirectoryConnectionTester
         connection.SessionOptions.SecureSocketLayer =
             _options.UseSsl;
 
-        connection.Bind();
+        LdapServerCertificateValidator? certificateValidator = null;
 
-        var rootDseRequest =
-            new SearchRequest(
-                distinguishedName: string.Empty,
-                ldapFilter: "(objectClass=*)",
-                searchScope: SearchScope.Base,
-                attributeList:
-                [
-                    "defaultNamingContext",
-                    "dnsHostName",
-                    "supportedLDAPVersion"
-                ]);
+        string? serverDnsHostName = null;
+        string? defaultNamingContext = null;
 
-        var rootDseResponse =
-            (SearchResponse)connection.SendRequest(
-                rootDseRequest);
+        IReadOnlyCollection<string> supportedLdapVersions =
+            Array.Empty<string>();
 
-        if (rootDseResponse.Entries.Count != 1)
+        if (_options.UseSsl &&
+            !string.IsNullOrWhiteSpace(
+                _options.TrustedCaCertificatePath))
         {
-            throw new InvalidOperationException(
-                "Le RootDSE Active Directory n'a pas pu être lu.");
+            certificateValidator =
+                new LdapServerCertificateValidator(
+                    _options.Host,
+                    _options.TrustedCaCertificatePath);
+
+            connection.SessionOptions.VerifyServerCertificate =
+                certificateValidator.Validate;
         }
 
-        var rootDse =
-            rootDseResponse.Entries[0];
+        try
+        {
+            connection.Bind();
 
-        var defaultNamingContext =
-            ReadFirstString(
-                rootDse,
-                "defaultNamingContext");
+            var rootDseRequest =
+                new SearchRequest(
+                    distinguishedName: string.Empty,
+                    ldapFilter: "(objectClass=*)",
+                    searchScope: SearchScope.Base,
+                    attributeList:
+                    [
+                        "defaultNamingContext",
+                        "dnsHostName",
+                        "supportedLDAPVersion"
+                    ]);
 
-        var serverDnsHostName =
-            ReadFirstString(
-                rootDse,
-                "dnsHostName");
+            var rootDseResponse =
+                (SearchResponse)connection.SendRequest(
+                    rootDseRequest);
 
-        var supportedLdapVersions =
-            ReadAllStrings(
-                rootDse,
-                "supportedLDAPVersion");
+            if (rootDseResponse.Entries.Count != 1)
+            {
+                throw new InvalidOperationException(
+                    "Le RootDSE Active Directory n'a pas pu être lu.");
+            }
 
-        ValidateConfiguredBaseDn(
-            connection);
+            var rootDse =
+                rootDseResponse.Entries[0];
+
+            defaultNamingContext =
+                ReadFirstString(
+                    rootDse,
+                    "defaultNamingContext");
+
+            serverDnsHostName =
+                ReadFirstString(
+                    rootDse,
+                    "dnsHostName");
+
+            supportedLdapVersions =
+                ReadAllStrings(
+                    rootDse,
+                    "supportedLDAPVersion");
+
+            ValidateConfiguredBaseDn(
+                connection);
+        }
+        finally
+        {
+            certificateValidator?.Dispose();
+        }
 
         return new ActiveDirectoryConnectionTestResult(
             Host: _options.Host,

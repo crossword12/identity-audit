@@ -18,6 +18,9 @@ public sealed class ActiveDirectoryOptions
     public string BindPassword { get; init; }
         = string.Empty;
 
+
+    public string? TrustedCaCertificatePath { get; init; }
+
     public TimeSpan Timeout { get; init; }
         = TimeSpan.FromSeconds(15);
 
@@ -50,6 +53,10 @@ public sealed class ActiveDirectoryOptions
 
             BindPassword = ReadRequired(
                 "AD_BIND_PASSWORD"),
+
+            TrustedCaCertificatePath =
+                Environment.GetEnvironmentVariable(
+                    "AD_TRUSTED_CA_CERTIFICATE"),
 
             Timeout = TimeSpan.FromSeconds(
                 ReadPositiveInteger(

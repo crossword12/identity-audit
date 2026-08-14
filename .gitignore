@@ -46,3 +46,5 @@ logs/
 # Fichiers temporaires
 *.tmp
 *.temp
+# Certificats locaux du laboratoire Active Directory
+collectors/active-directory/.certs/
