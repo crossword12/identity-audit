@@ -205,6 +205,97 @@ try
             $"  IsPrivileged : {group.IsPrivileged}");
     }
 
+    Console.WriteLine();
+    Console.WriteLine(
+        "Résolution des appartenances aux groupes...");
+
+    var membershipResolver =
+        new ActiveDirectoryGroupMembershipResolver();
+
+    var memberships =
+        membershipResolver.Resolve(
+            users,
+            adGroups);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"{memberships.Count} appartenance(s) " +
+        "utilisateur-groupe résolue(s).");
+
+    Console.WriteLine();
+
+    var identityNamesByExternalId =
+        identities.ToDictionary(
+            identity => identity.ExternalId,
+            identity => identity.UserName,
+            StringComparer.OrdinalIgnoreCase);
+
+    var groupNamesByExternalId =
+        groups.ToDictionary(
+            group => group.ExternalId,
+            group => group.Name,
+            StringComparer.OrdinalIgnoreCase);
+
+    foreach (var membership in memberships)
+    {
+        var identityName =
+            identityNamesByExternalId.TryGetValue(
+                membership.IdentityExternalId,
+                out var resolvedIdentityName)
+                ? resolvedIdentityName
+                : membership.IdentityExternalId;
+
+        var groupName =
+            groupNamesByExternalId.TryGetValue(
+                membership.GroupExternalId,
+                out var resolvedGroupName)
+                ? resolvedGroupName
+                : membership.GroupExternalId;
+
+        Console.WriteLine(
+            $"- {identityName}");
+
+        Console.WriteLine(
+            $"  → {groupName}");
+
+        Console.WriteLine(
+            $"  Type : {membership.MembershipType}");
+    }
+    var privilegedGroupExternalIds =
+    groups
+        .Where(group =>
+            group.IsPrivileged)
+        .Select(group =>
+            group.ExternalId)
+        .ToHashSet(
+            StringComparer.OrdinalIgnoreCase);
+
+    var privilegedIdentityExternalIds =
+        memberships
+            .Where(membership =>
+                privilegedGroupExternalIds.Contains(
+                    membership.GroupExternalId))
+            .Select(membership =>
+                membership.IdentityExternalId)
+            .ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Identités disposant d'une appartenance " +
+        "à un groupe privilégié :");
+
+    Console.WriteLine();
+
+    foreach (var identity in identities
+        .Where(identity =>
+            privilegedIdentityExternalIds.Contains(
+                identity.ExternalId)))
+    {
+        Console.WriteLine(
+            $"- {identity.UserName}");
+    }
+
     return 0;
 }
 catch (LdapException exception)

@@ -109,7 +109,8 @@ public sealed class ActiveDirectoryGroupCollector
                         "sAMAccountName",
                         "cn",
                         "description",
-                        "groupType"
+                        "groupType",
+                        "memberOf"
                     ]);
 
             request.Controls.Add(
@@ -211,7 +212,13 @@ public sealed class ActiveDirectoryGroupCollector
                 ReadInteger(
                     entry,
                     "groupType")
-                ?? 0
+                ?? 0,
+
+            MemberOfDistinguishedNames =
+                ReadAllStrings(
+                    entry,
+                    "memberOf")
+
         };
     }
 
@@ -294,6 +301,31 @@ public sealed class ActiveDirectoryGroupCollector
         return values.Length > 0
             ? values[0]?.ToString()
             : null;
+    }
+
+    private static IReadOnlyCollection<string>
+    ReadAllStrings(
+        SearchResultEntry entry,
+        string attributeName)
+    {
+        var attribute =
+            entry.Attributes[
+                attributeName];
+
+        if (attribute is null ||
+            attribute.Count == 0)
+        {
+            return Array.Empty<string>();
+        }
+
+        return attribute
+            .GetValues(typeof(string))
+            .Cast<string>()
+            .Where(value =>
+                !string.IsNullOrWhiteSpace(value))
+            .Select(value =>
+                value.Trim())
+            .ToArray();
     }
 
     private static string ConvertSidToString(

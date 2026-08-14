@@ -114,7 +114,8 @@ public sealed class ActiveDirectoryUserCollector
                         "msDS-User-Account-Control-Computed",
                         "lastLogonTimestamp",
                         "description",
-                        "servicePrincipalName"
+                        "servicePrincipalName",
+                        "memberOf"
                     ]);
 
             request.Controls.Add(
@@ -233,7 +234,12 @@ public sealed class ActiveDirectoryUserCollector
             ServicePrincipalNames =
                 ReadAllStrings(
                     entry,
-                    "servicePrincipalName")
+                    "servicePrincipalName"),
+
+            MemberOfDistinguishedNames =
+                ReadAllStrings(
+                    entry,
+                    "memberOf")
         };
     }
 

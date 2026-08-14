@@ -15,4 +15,10 @@ public sealed class ActiveDirectoryGroup
     public string? Description { get; init; }
 
     public int GroupTypeValue { get; init; }
+
+    public IReadOnlyCollection<string> MemberOfDistinguishedNames
+    {
+        get;
+        init;
+    } = Array.Empty<string>();
 }

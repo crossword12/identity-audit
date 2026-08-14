@@ -27,4 +27,10 @@ public sealed class ActiveDirectoryUser
         get;
         init;
     } = Array.Empty<string>();
+
+    public IReadOnlyCollection<string> MemberOfDistinguishedNames
+    {
+        get;
+        init;
+    } = Array.Empty<string>();
 }
