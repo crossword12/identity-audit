@@ -240,6 +240,142 @@ public static class AuditRuleCatalogSeeder
 
                 CreatedAt = now,
                 UpdatedAt = now
+            },
+
+                        new AuditRule
+            {
+                Id = Guid.Parse(
+                    "51000000-0000-0000-0000-000000000001"),
+
+                Code = "AD-05-01",
+
+                Name =
+                    "Comptes actifs inactifs depuis plus de 90 jours",
+
+                Description =
+                    "Détecte les comptes Active Directory toujours " +
+                    "actifs dont la dernière activité connue remonte " +
+                    "à plus de 90 jours.",
+
+                CisControl = "CIS Control 5",
+
+                TargetType =
+                    TargetType.ActiveDirectory,
+
+                Severity =
+                    RuleSeverity.Medium,
+
+                Recommendation =
+                    "Examiner l'utilisation du compte et confirmer " +
+                    "qu'il est toujours nécessaire. Désactiver ou " +
+                    "supprimer les comptes devenus inutiles.",
+
+                IsEnabled = true,
+
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+
+            new AuditRule
+            {
+                Id = Guid.Parse(
+                    "51000000-0000-0000-0000-000000000002"),
+
+                Code = "AD-05-02",
+
+                Name =
+                    "Comptes désactivés conservant des privilèges",
+
+                Description =
+                    "Détecte les comptes Active Directory désactivés " +
+                    "qui conservent une appartenance directe ou " +
+                    "transitive à un groupe privilégié.",
+
+                CisControl = "CIS Control 5",
+
+                TargetType =
+                    TargetType.ActiveDirectory,
+
+                Severity =
+                    RuleSeverity.High,
+
+                Recommendation =
+                    "Retirer les appartenances privilégiées des " +
+                    "comptes désactivés et vérifier qu'aucun droit " +
+                    "administratif résiduel n'est conservé.",
+
+                IsEnabled = true,
+
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+
+            new AuditRule
+            {
+                Id = Guid.Parse(
+                    "51000000-0000-0000-0000-000000000003"),
+
+                Code = "AD-05-03",
+
+                Name =
+                    "Comptes de service sans propriétaire identifié",
+
+                Description =
+                    "Détecte les comptes de service Active Directory " +
+                    "pour lesquels aucun propriétaire responsable " +
+                    "n'est renseigné.",
+
+                CisControl = "CIS Control 5",
+
+                TargetType =
+                    TargetType.ActiveDirectory,
+
+                Severity =
+                    RuleSeverity.Medium,
+
+                Recommendation =
+                    "Attribuer un propriétaire responsable à chaque " +
+                    "compte de service et documenter son usage, sa " +
+                    "criticité et sa procédure de révision.",
+
+                IsEnabled = true,
+
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+
+            new AuditRule
+            {
+                Id = Guid.Parse(
+                    "61000000-0000-0000-0000-000000000001"),
+
+                Code = "AD-06-01",
+
+                Name =
+                    "Appartenances aux groupes privilégiés",
+
+                Description =
+                    "Identifie les comptes Active Directory disposant " +
+                    "d'une appartenance directe ou transitive à un " +
+                    "groupe considéré comme privilégié.",
+
+                CisControl = "CIS Control 6",
+
+                TargetType =
+                    TargetType.ActiveDirectory,
+
+                Severity =
+                    RuleSeverity.High,
+
+                Recommendation =
+                    "Vérifier que chaque appartenance à un groupe " +
+                    "privilégié est justifiée, approuvée et encore " +
+                    "nécessaire selon le principe du moindre privilège.",
+
+                IsEnabled = true,
+
+                CreatedAt = now,
+                UpdatedAt = now
             }
         ];
     }

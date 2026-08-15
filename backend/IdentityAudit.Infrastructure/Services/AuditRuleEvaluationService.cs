@@ -124,6 +124,24 @@ public sealed class AuditRuleEvaluationService
                             audit,
                             referenceTime),
 
+                    "AD-05-01" =>
+                        EvaluateInactiveAccounts(
+                            audit,
+                            referenceTime),
+
+                    "AD-05-02" =>
+                        EvaluateDisabledPrivilegedAccounts(
+                            audit,
+                            referenceTime),
+
+                    "AD-05-03" =>
+                        EvaluateServiceAccountsWithoutOwner(
+                            audit),
+
+                    "AD-06-01" =>
+                        EvaluatePrivilegedGroupMemberships(
+                            audit),
+
                     _ => new EvaluationOutcome(
                         RuleEvaluationStatus.Error,
                         0,
