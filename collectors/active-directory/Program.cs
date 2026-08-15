@@ -115,56 +115,6 @@ try
     }
     Console.WriteLine();
     Console.WriteLine(
-        "Normalisation des utilisateurs pour l'API...");
-
-    var userMapper =
-        new ActiveDirectoryUserMapper();
-
-    var identities =
-        userMapper.Map(users);
-
-    Console.WriteLine();
-    Console.WriteLine(
-        $"{identities.Count} identité(s) Active Directory normalisée(s).");
-
-    Console.WriteLine();
-
-    foreach (var identity in identities)
-    {
-        Console.WriteLine(
-            $"- {identity.UserName}");
-
-        Console.WriteLine(
-            $"  ExternalId : {identity.ExternalId}");
-
-        Console.WriteLine(
-            $"  DisplayName : {identity.DisplayName}");
-
-        Console.WriteLine(
-            $"  Source : {identity.Source}");
-
-        Console.WriteLine(
-            $"  AccountType : {identity.AccountType}");
-
-        Console.WriteLine(
-            $"  IsEnabled : {identity.IsEnabled}");
-
-        Console.WriteLine(
-            $"  IsLocked : " +
-            $"{identity.IsLocked?.ToString() ?? "indisponible"}");
-
-        Console.WriteLine(
-            $"  IsServiceAccount : {identity.IsServiceAccount}");
-
-        Console.WriteLine(
-            $"  IsPrivileged : {identity.IsPrivileged}");
-
-        Console.WriteLine(
-            $"  LastSignInAt : " +
-            $"{identity.LastSignInAt?.ToString("u") ?? "indisponible"}");
-    }
-    Console.WriteLine();
-    Console.WriteLine(
         "Collecte des groupes Active Directory...");
 
     var groupCollector =
@@ -222,7 +172,77 @@ try
         $"{memberships.Count} appartenance(s) " +
         "utilisateur-groupe résolue(s).");
 
+    var privilegedGroupExternalIds =
+        groups
+            .Where(group =>
+                group.IsPrivileged)
+            .Select(group =>
+                group.ExternalId)
+            .ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
+    var privilegedIdentityExternalIds =
+        memberships
+            .Where(membership =>
+                privilegedGroupExternalIds.Contains(
+                    membership.GroupExternalId))
+            .Select(membership =>
+                membership.IdentityExternalId)
+            .ToHashSet(
+                StringComparer.OrdinalIgnoreCase);
+
     Console.WriteLine();
+    Console.WriteLine(
+        "Normalisation des utilisateurs pour l'API...");
+
+    var userMapper =
+        new ActiveDirectoryUserMapper();
+
+    var identities =
+        userMapper.Map(
+            users,
+            privilegedIdentityExternalIds);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"{identities.Count} identité(s) Active Directory normalisée(s).");
+
+    Console.WriteLine();
+
+    foreach (var identity in identities)
+    {
+        Console.WriteLine(
+            $"- {identity.UserName}");
+
+        Console.WriteLine(
+            $"  ExternalId : {identity.ExternalId}");
+
+        Console.WriteLine(
+            $"  DisplayName : {identity.DisplayName}");
+
+        Console.WriteLine(
+            $"  Source : {identity.Source}");
+
+        Console.WriteLine(
+            $"  AccountType : {identity.AccountType}");
+
+        Console.WriteLine(
+            $"  IsEnabled : {identity.IsEnabled}");
+
+        Console.WriteLine(
+            $"  IsLocked : " +
+            $"{identity.IsLocked?.ToString() ?? "indisponible"}");
+
+        Console.WriteLine(
+            $"  IsServiceAccount : {identity.IsServiceAccount}");
+
+        Console.WriteLine(
+            $"  IsPrivileged : {identity.IsPrivileged}");
+
+        Console.WriteLine(
+            $"  LastSignInAt : " +
+            $"{identity.LastSignInAt?.ToString("u") ?? "indisponible"}");
+    }
 
     var identityNamesByExternalId =
         identities.ToDictionary(
@@ -235,6 +255,12 @@ try
             group => group.ExternalId,
             group => group.Name,
             StringComparer.OrdinalIgnoreCase);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Appartenances utilisateur-groupe :");
+
+    Console.WriteLine();
 
     foreach (var membership in memberships)
     {
@@ -261,24 +287,6 @@ try
         Console.WriteLine(
             $"  Type : {membership.MembershipType}");
     }
-    var privilegedGroupExternalIds =
-    groups
-        .Where(group =>
-            group.IsPrivileged)
-        .Select(group =>
-            group.ExternalId)
-        .ToHashSet(
-            StringComparer.OrdinalIgnoreCase);
-
-    var privilegedIdentityExternalIds =
-        memberships
-            .Where(membership =>
-                privilegedGroupExternalIds.Contains(
-                    membership.GroupExternalId))
-            .Select(membership =>
-                membership.IdentityExternalId)
-            .ToHashSet(
-                StringComparer.OrdinalIgnoreCase);
 
     Console.WriteLine();
     Console.WriteLine(
@@ -289,8 +297,7 @@ try
 
     foreach (var identity in identities
         .Where(identity =>
-            privilegedIdentityExternalIds.Contains(
-                identity.ExternalId)))
+            identity.IsPrivileged))
     {
         Console.WriteLine(
             $"- {identity.UserName}");

@@ -9,17 +9,25 @@ public sealed class ActiveDirectoryUserMapper
     private const int AccountLockedFlag = 0x0010;
 
     public IReadOnlyCollection<CollectedIdentityPayload> Map(
-        IEnumerable<ActiveDirectoryUser> users)
+        IEnumerable<ActiveDirectoryUser> users,
+        IReadOnlySet<string> privilegedIdentityExternalIds)
     {
         ArgumentNullException.ThrowIfNull(users);
 
+        ArgumentNullException.ThrowIfNull(
+            privilegedIdentityExternalIds);
+
         return users
-            .Select(MapUser)
+            .Select(user =>
+                MapUser(
+                    user,
+                    privilegedIdentityExternalIds))
             .ToList();
     }
 
     private static CollectedIdentityPayload MapUser(
-        ActiveDirectoryUser user)
+        ActiveDirectoryUser user,
+        IReadOnlySet<string> privilegedIdentityExternalIds)
     {
         var isEnabled =
             (user.UserAccountControl &
@@ -34,10 +42,17 @@ public sealed class ActiveDirectoryUserMapper
         var isServiceAccount =
             IsServiceAccount(user);
 
+        var externalId =
+            user.ObjectGuid.Trim();
+
+        var isPrivileged =
+            privilegedIdentityExternalIds.Contains(
+                externalId);
+
         return new CollectedIdentityPayload
         {
             ExternalId =
-                user.ObjectGuid.Trim(),
+                externalId,
 
             DisplayName =
                 GetDisplayName(user),
@@ -60,10 +75,8 @@ public sealed class ActiveDirectoryUserMapper
             IsEnabled =
                 isEnabled,
 
-            // Le privilège dépendra des groupes
-            // et appartenances collectés ensuite.
             IsPrivileged =
-                false,
+                isPrivileged,
 
             IsServiceAccount =
                 isServiceAccount,
