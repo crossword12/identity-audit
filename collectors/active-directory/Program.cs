@@ -431,6 +431,45 @@ try
 
     Console.WriteLine();
     Console.WriteLine(
+        "Exécution automatique des règles CIS Active Directory...");
+
+    var evaluationResult =
+        await apiClient.EvaluateAuditRulesAsync(
+            createdAudit.Id);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        $"Règles évaluées : " +
+        $"{evaluationResult.EvaluatedRuleCount}");
+
+    Console.WriteLine(
+        $"Règles conformes : " +
+        $"{evaluationResult.CompliantCount}");
+
+    Console.WriteLine(
+        $"Règles non conformes : " +
+        $"{evaluationResult.NonCompliantCount}");
+
+    Console.WriteLine(
+        $"Règles non applicables : " +
+        $"{evaluationResult.NotApplicableCount}");
+
+    Console.WriteLine(
+        $"Règles non vérifiables : " +
+        $"{evaluationResult.NotVerifiableCount}");
+
+    Console.WriteLine(
+        $"Erreurs d'évaluation : " +
+        $"{evaluationResult.ErrorCount}");
+
+    Console.WriteLine(
+        "Score de conformité : " +
+        (evaluationResult.ComplianceScore.HasValue
+            ? $"{evaluationResult.ComplianceScore.Value:F2} %"
+            : "indisponible"));
+
+    Console.WriteLine();
+    Console.WriteLine(
         "Collecte Active Directory terminée avec succès.");
 
     Console.WriteLine(
