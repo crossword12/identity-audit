@@ -1,0 +1,82 @@
+namespace IdentityAudit.ActiveDirectoryCollector.Models;
+
+public sealed class CreateAuditPayload
+{
+    public Guid TargetId { get; init; }
+}
+
+public sealed class AuditApiResponse
+{
+    public Guid Id { get; init; }
+
+    public Guid TargetId { get; init; }
+
+    public string Status { get; init; } = string.Empty;
+
+    public DateTimeOffset? StartedAt { get; init; }
+
+    public DateTimeOffset? CompletedAt { get; init; }
+}
+
+public sealed class ImportIdentitiesPayload
+{
+    public IReadOnlyCollection<CollectedIdentityPayload> Identities
+    {
+        get;
+        init;
+    } = Array.Empty<CollectedIdentityPayload>();
+}
+
+public sealed class ImportIdentitiesApiResponse
+{
+    public int ImportedCount { get; init; }
+}
+
+public sealed class ImportGroupsPayload
+{
+    public IReadOnlyCollection<CollectedGroupPayload> Groups
+    {
+        get;
+        init;
+    } = Array.Empty<CollectedGroupPayload>();
+}
+
+public sealed class ImportGroupsApiResponse
+{
+    public int ImportedCount { get; init; }
+}
+
+public sealed class ImportGroupMembershipsPayload
+{
+    public IReadOnlyCollection<
+        CollectedGroupMembershipPayload> Memberships
+    {
+        get;
+        init;
+    } = Array.Empty<
+        CollectedGroupMembershipPayload>();
+}
+
+public sealed class ImportGroupMembershipsApiResponse
+{
+    public int ImportedCount { get; init; }
+}
+
+public sealed class EvaluateAuditRulesApiResponse
+{
+    public Guid AuditId { get; init; }
+
+    public int EvaluatedRuleCount { get; init; }
+
+    public int CompliantCount { get; init; }
+
+    public int NonCompliantCount { get; init; }
+
+    public int NotApplicableCount { get; init; }
+
+    public int NotVerifiableCount { get; init; }
+
+    public int ErrorCount { get; init; }
+
+    public decimal? ComplianceScore { get; init; }
+}

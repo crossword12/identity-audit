@@ -2,10 +2,38 @@
 using IdentityAudit.ActiveDirectoryCollector.Configuration;
 using IdentityAudit.ActiveDirectoryCollector.Services;
 
+if (args.Length < 2 ||
+    !Guid.TryParse(
+        args[0],
+        out var targetId))
+{
+    Console.Error.WriteLine(
+        "Utilisation : " +
+        "IdentityAudit.ActiveDirectoryCollector " +
+        "<targetId> <apiUrl>");
+
+    Console.Error.WriteLine(
+        "Exemple : " +
+        "IdentityAudit.ActiveDirectoryCollector.exe " +
+        "8a4b90a9-a72d-485a-af9e-83cc91cd3a91 " +
+        "http://192.168.1.10:5173");
+
+    return 1;
+}
+
+var apiBaseUrl =
+    args[1].TrimEnd('/');
+
 try
 {
     Console.WriteLine(
         "Démarrage du collecteur Active Directory.");
+
+    Console.WriteLine(
+    $"Cible Active Directory : {targetId}");
+
+    Console.WriteLine(
+        $"Backend utilisé : {apiBaseUrl}");
 
     Console.WriteLine(
         "Chargement de la configuration LDAP...");
@@ -303,7 +331,128 @@ try
             $"- {identity.UserName}");
     }
 
+    Console.WriteLine();
+    Console.WriteLine(
+        "Connexion au backend Identity Audit...");
+
+    using var httpClient =
+        new HttpClient
+        {
+            BaseAddress =
+                new Uri(
+                    $"{apiBaseUrl}/"),
+
+            Timeout =
+                TimeSpan.FromSeconds(30)
+        };
+
+    var apiClient =
+        new IdentityAuditApiClient(
+            httpClient);
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Création d'un nouvel audit Active Directory...");
+
+    var createdAudit =
+        await apiClient.CreateAuditAsync(
+            targetId);
+
+    Console.WriteLine(
+        $"Audit créé : {createdAudit.Id}");
+
+    Console.WriteLine(
+        $"Statut : {createdAudit.Status}");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Démarrage de l'audit...");
+
+    var startedAudit =
+        await apiClient.StartAuditAsync(
+            createdAudit.Id);
+
+    Console.WriteLine(
+        $"Statut : {startedAudit.Status}");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Envoi des identités vers le backend...");
+
+    var identityImportResult =
+        await apiClient.ImportIdentitiesAsync(
+            createdAudit.Id,
+            identities);
+
+    Console.WriteLine(
+        $"Importation réussie : " +
+        $"{identityImportResult.ImportedCount} identité(s).");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Envoi des groupes vers le backend...");
+
+    var groupImportResult =
+        await apiClient.ImportGroupsAsync(
+            createdAudit.Id,
+            groups);
+
+    Console.WriteLine(
+        $"Importation réussie : " +
+        $"{groupImportResult.ImportedCount} groupe(s).");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Envoi des appartenances vers le backend...");
+
+    var membershipImportResult =
+        await apiClient.ImportGroupMembershipsAsync(
+            createdAudit.Id,
+            memberships);
+
+    Console.WriteLine(
+        $"Importation réussie : " +
+        $"{membershipImportResult.ImportedCount} appartenance(s).");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Finalisation de l'audit...");
+
+    var completedAudit =
+        await apiClient.CompleteAuditAsync(
+            createdAudit.Id);
+
+    Console.WriteLine(
+        $"Statut final : {completedAudit.Status}");
+
+    Console.WriteLine(
+        $"Date de fin : " +
+        $"{completedAudit.CompletedAt?.ToString("u") ?? "indisponible"}");
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Collecte Active Directory terminée avec succès.");
+
+    Console.WriteLine(
+        $"Audit concerné : {completedAudit.Id}");
+
     return 0;
+}
+catch (HttpRequestException exception)
+{
+    Console.Error.WriteLine(
+        "Impossible de contacter le backend : " +
+        exception.Message);
+
+    return 1;
+}
+catch (TaskCanceledException)
+{
+    Console.Error.WriteLine(
+        "La communication avec le backend " +
+        "a dépassé le délai autorisé.");
+
+    return 1;
 }
 catch (LdapException exception)
 {
