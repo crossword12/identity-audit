@@ -30,6 +30,16 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 builder.Services.AddValidation();
 
 builder.Services.AddOpenApi();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("Frontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5174")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
 
 builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
     options.UseNpgsql(connectionString));
@@ -75,6 +85,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseCors("Frontend");
 
 app.UseHttpsRedirection();
 
