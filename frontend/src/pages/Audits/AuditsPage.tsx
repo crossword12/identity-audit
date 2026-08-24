@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock3,
+  Eye,
   Flag,
   LoaderCircle,
   Play,
@@ -12,10 +13,11 @@ import {
   RefreshCw,
   XCircle,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { completeAudit, getAudits, startAudit } from "../../api/auditsApi";
+import CreateAuditModal from "../../components/audits/CreateAuditModal";
 import type { Audit, AuditStatus } from "../../types/audit";
 import "./AuditsPage.css";
-import CreateAuditModal from "../../components/audits/CreateAuditModal";
 
 type StatusFilter = "All" | AuditStatus;
 
@@ -117,6 +119,7 @@ function AuditsPage() {
 
     setIsCreateModalOpen(false);
   }
+
   const filteredAudits = useMemo(() => {
     if (statusFilter === "All") {
       return audits;
@@ -200,6 +203,7 @@ function AuditsPage() {
             <RefreshCw className={loading ? "audit-spin" : ""} size={18} />
             Actualiser
           </button>
+
           <button
             className="new-audit-button"
             type="button"
@@ -216,6 +220,7 @@ function AuditsPage() {
           <div className="audit-summary-icon total">
             <ClipboardList size={21} />
           </div>
+
           <div>
             <span>Total des audits</span>
             <strong>{audits.length}</strong>
@@ -226,6 +231,7 @@ function AuditsPage() {
           <div className="audit-summary-icon running">
             <Clock3 size={21} />
           </div>
+
           <div>
             <span>En cours</span>
             <strong>{runningCount}</strong>
@@ -236,6 +242,7 @@ function AuditsPage() {
           <div className="audit-summary-icon completed">
             <CheckCircle2 size={21} />
           </div>
+
           <div>
             <span>Terminés</span>
             <strong>{completedCount}</strong>
@@ -246,6 +253,7 @@ function AuditsPage() {
           <div className="audit-summary-icon attention">
             <AlertTriangle size={21} />
           </div>
+
           <div>
             <span>À surveiller</span>
             <strong>{attentionCount}</strong>
@@ -278,6 +286,7 @@ function AuditsPage() {
 
             <label className="audit-filter">
               <span>Statut</span>
+
               <select
                 value={statusFilter}
                 onChange={(event) =>
@@ -311,7 +320,7 @@ function AuditsPage() {
                     <th>Démarré le</th>
                     <th>Terminé le</th>
                     <th>Score CIS</th>
-                    <th>Action</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
 
@@ -325,6 +334,7 @@ function AuditsPage() {
                           <span className="audit-reference">
                             #{audit.id.slice(0, 8)}
                           </span>
+
                           <small>{formatDate(audit.createdAt)}</small>
                         </td>
 
@@ -344,6 +354,7 @@ function AuditsPage() {
                         </td>
 
                         <td>{formatDate(audit.startedAt)}</td>
+
                         <td>{formatDate(audit.completedAt)}</td>
 
                         <td>
@@ -359,48 +370,53 @@ function AuditsPage() {
                         </td>
 
                         <td>
-                          {audit.status === "Pending" && (
-                            <button
-                              className="audit-action-button start"
-                              type="button"
-                              disabled={actionId !== null}
-                              onClick={() => void handleAuditAction(audit)}
-                            >
-                              {isProcessing ? (
-                                <LoaderCircle
-                                  className="audit-spin"
-                                  size={16}
-                                />
-                              ) : (
-                                <Play size={16} />
-                              )}
-                              Démarrer
-                            </button>
-                          )}
-
-                          {audit.status === "Running" && (
-                            <button
-                              className="audit-action-button complete"
-                              type="button"
-                              disabled={actionId !== null}
-                              onClick={() => void handleAuditAction(audit)}
-                            >
-                              {isProcessing ? (
-                                <LoaderCircle
-                                  className="audit-spin"
-                                  size={16}
-                                />
-                              ) : (
-                                <Flag size={16} />
-                              )}
-                              Terminer
-                            </button>
-                          )}
-
-                          {audit.status !== "Pending" &&
-                            audit.status !== "Running" && (
-                              <span className="no-audit-action">—</span>
+                          <div className="audit-row-actions">
+                            {audit.status === "Pending" && (
+                              <button
+                                className="audit-action-button start"
+                                type="button"
+                                disabled={actionId !== null}
+                                onClick={() => void handleAuditAction(audit)}
+                              >
+                                {isProcessing ? (
+                                  <LoaderCircle
+                                    className="audit-spin"
+                                    size={16}
+                                  />
+                                ) : (
+                                  <Play size={16} />
+                                )}
+                                Démarrer
+                              </button>
                             )}
+
+                            {audit.status === "Running" && (
+                              <button
+                                className="audit-action-button complete"
+                                type="button"
+                                disabled={actionId !== null}
+                                onClick={() => void handleAuditAction(audit)}
+                              >
+                                {isProcessing ? (
+                                  <LoaderCircle
+                                    className="audit-spin"
+                                    size={16}
+                                  />
+                                ) : (
+                                  <Flag size={16} />
+                                )}
+                                Terminer
+                              </button>
+                            )}
+
+                            <Link
+                              className="audit-details-link"
+                              to={`/audits/${audit.id}`}
+                            >
+                              <Eye size={16} />
+                              Résultats
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -411,6 +427,7 @@ function AuditsPage() {
           )}
         </section>
       )}
+
       {isCreateModalOpen && (
         <CreateAuditModal
           onClose={() => setIsCreateModalOpen(false)}

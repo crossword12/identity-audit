@@ -349,12 +349,6 @@
   opacity: 0.65;
 }
 
-.no-audit-action {
-  display: block;
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
 .audits-empty {
   padding: 42px 20px;
   color: var(--color-text-secondary);
@@ -407,4 +401,31 @@
   .audit-filter select {
     width: 100%;
   }
+}
+.audit-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.audit-details-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: white;
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.audit-details-link:hover {
+  border-color: var(--color-primary);
+  background: #eaf2f9;
+  color: var(--color-primary);
 }
