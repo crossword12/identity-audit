@@ -5,8 +5,27 @@ export interface Target {
   name: string
   type: TargetType
   isEnabled: boolean
-  configurationJson: string
+  configurationJson: string | null
   createdAt: string
-  updatedAt: string | null
+  updatedAt: string
   lastCollectedAt: string | null
+}
+
+export interface CreateTargetRequest {
+  name: string
+  type: TargetType
+  isEnabled: boolean
+  configurationJson: string | null
+}
+
+export interface UpdateTargetRequest {
+  name: string
+  isEnabled: boolean
+  configurationJson: string | null
+}
+
+export interface TestTargetConnectionResult {
+  succeeded: boolean
+  message: string
+  testedAt: string
 }
