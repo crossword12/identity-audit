@@ -564,3 +564,48 @@
     gap: 3px;
   }
 }
+.audit-detail-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 20px;
+  padding: 5px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-card);
+}
+
+.audit-detail-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.audit-detail-tab:hover {
+  background: #f3f6f9;
+  color: var(--color-text);
+}
+
+.audit-detail-tab.active {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: 0 2px 6px rgb(47 117 181 / 20%);
+}
+
+@media (max-width: 700px) {
+  .audit-detail-tabs {
+    flex-direction: column;
+  }
+
+  .audit-detail-tab {
+    width: 100%;
+  }
+}

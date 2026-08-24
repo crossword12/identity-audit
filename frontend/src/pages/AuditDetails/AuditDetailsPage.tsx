@@ -8,6 +8,7 @@ import {
   LoaderCircle,
   RefreshCw,
   ShieldCheck,
+  Users,
   XCircle,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -16,6 +17,7 @@ import {
   evaluateAuditRules,
   getAuditRuleEvaluations,
 } from "../../api/ruleEvaluationsApi";
+import AuditIdentitiesPanel from "../../components/audit-details/AuditIdentitiesPanel";
 import type { Audit, AuditStatus } from "../../types/audit";
 import type {
   RuleEvaluation,
@@ -24,6 +26,7 @@ import type {
 } from "../../types/ruleEvaluation";
 import "./AuditDetailsPage.css";
 
+type DetailTab = "results" | "identities";
 type EvaluationFilter = "All" | RuleEvaluationStatus;
 type EvidenceRecord = Record<string, unknown>;
 
@@ -194,6 +197,7 @@ function AuditDetailsPage() {
 
   const [audit, setAudit] = useState<Audit | null>(null);
   const [evaluations, setEvaluations] = useState<RuleEvaluation[]>([]);
+  const [activeTab, setActiveTab] = useState<DetailTab>("results");
   const [filter, setFilter] = useState<EvaluationFilter>("All");
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
@@ -274,6 +278,7 @@ function AuditDetailsPage() {
       const result = await evaluateAuditRules(audit.id);
 
       setEvaluations(result.evaluations);
+
       setAudit((currentAudit) =>
         currentAudit
           ? {
@@ -359,7 +364,7 @@ function AuditDetailsPage() {
           </p>
         </div>
 
-        {audit.status === "Running" && (
+        {audit.status === "Running" && activeTab === "results" && (
           <button
             className="evaluate-rules-button"
             type="button"
@@ -399,193 +404,248 @@ function AuditDetailsPage() {
         </div>
       </section>
 
-      <div className="evaluation-summary-grid">
-        <article>
-          <div className="evaluation-summary-icon total">
-            <FileSearch size={21} />
-          </div>
-          <div>
-            <span>Règles évaluées</span>
-            <strong>{evaluations.length}</strong>
-          </div>
-        </article>
+      <div
+        className="audit-detail-tabs"
+        role="tablist"
+        aria-label="Contenu du détail de l’audit"
+      >
+        <button
+          className={`audit-detail-tab ${
+            activeTab === "results" ? "active" : ""
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "results"}
+          onClick={() => setActiveTab("results")}
+        >
+          <FileSearch size={18} />
+          Résultats CIS
+        </button>
 
-        <article>
-          <div className="evaluation-summary-icon compliant">
-            <CheckCircle2 size={21} />
-          </div>
-          <div>
-            <span>Conformes</span>
-            <strong>{compliantCount}</strong>
-          </div>
-        </article>
-
-        <article>
-          <div className="evaluation-summary-icon noncompliant">
-            <XCircle size={21} />
-          </div>
-          <div>
-            <span>Non conformes</span>
-            <strong>{nonCompliantCount}</strong>
-          </div>
-        </article>
-
-        <article>
-          <div className="evaluation-summary-icon findings">
-            <AlertTriangle size={21} />
-          </div>
-          <div>
-            <span>Constats détectés</span>
-            <strong>{findingCount}</strong>
-          </div>
-        </article>
+        <button
+          className={`audit-detail-tab ${
+            activeTab === "identities" ? "active" : ""
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "identities"}
+          onClick={() => setActiveTab("identities")}
+        >
+          <Users size={18} />
+          Identités
+        </button>
       </div>
 
-      {evaluationError && (
-        <div className="evaluation-error">
-          <XCircle size={18} />
-          {evaluationError}
-        </div>
-      )}
+      {activeTab === "results" ? (
+        <>
+          <div className="evaluation-summary-grid">
+            <article>
+              <div className="evaluation-summary-icon total">
+                <FileSearch size={21} />
+              </div>
 
-      <section className="evaluations-section">
-        <div className="evaluations-toolbar">
-          <div>
-            <h2>Résultats des règles CIS</h2>
-            <span>{filteredEvaluations.length} résultat(s)</span>
+              <div>
+                <span>Règles évaluées</span>
+                <strong>{evaluations.length}</strong>
+              </div>
+            </article>
+
+            <article>
+              <div className="evaluation-summary-icon compliant">
+                <CheckCircle2 size={21} />
+              </div>
+
+              <div>
+                <span>Conformes</span>
+                <strong>{compliantCount}</strong>
+              </div>
+            </article>
+
+            <article>
+              <div className="evaluation-summary-icon noncompliant">
+                <XCircle size={21} />
+              </div>
+
+              <div>
+                <span>Non conformes</span>
+                <strong>{nonCompliantCount}</strong>
+              </div>
+            </article>
+
+            <article>
+              <div className="evaluation-summary-icon findings">
+                <AlertTriangle size={21} />
+              </div>
+
+              <div>
+                <span>Constats détectés</span>
+                <strong>{findingCount}</strong>
+              </div>
+            </article>
           </div>
 
-          <label>
-            <span>Statut</span>
-            <select
-              value={filter}
-              onChange={(event) =>
-                setFilter(event.target.value as EvaluationFilter)
-              }
-            >
-              <option value="All">Tous les statuts</option>
-              <option value="Compliant">Conformes</option>
-              <option value="NonCompliant">Non conformes</option>
-              <option value="NotApplicable">Non applicables</option>
-              <option value="NotVerifiable">Non vérifiables</option>
-              <option value="Error">Erreurs</option>
-            </select>
-          </label>
-        </div>
+          {evaluationError && (
+            <div className="evaluation-error">
+              <XCircle size={18} />
+              {evaluationError}
+            </div>
+          )}
 
-        {filteredEvaluations.length === 0 ? (
-          <div className="evaluations-empty">
-            <ShieldCheck size={34} />
-            <strong>Aucun résultat disponible</strong>
-            <span>
-              Les règles n’ont pas encore été évaluées ou aucun résultat ne
-              correspond au filtre.
-            </span>
-          </div>
-        ) : (
-          <div className="evaluation-list">
-            {filteredEvaluations.map((evaluation) => {
-              const evidenceItems = parseEvidence(evaluation.evidenceJson);
+          <section className="evaluations-section">
+            <div className="evaluations-toolbar">
+              <div>
+                <h2>Résultats des règles CIS</h2>
+                <span>{filteredEvaluations.length} résultat(s)</span>
+              </div>
 
-              return (
-                <article className="evaluation-card" key={evaluation.id}>
-                  <div className="evaluation-card-header">
-                    <div>
-                      <div className="evaluation-identifiers">
-                        <span className="rule-code">{evaluation.ruleCode}</span>
-                        <span>{evaluation.cisControl}</span>
+              <label>
+                <span>Statut</span>
+
+                <select
+                  value={filter}
+                  onChange={(event) =>
+                    setFilter(event.target.value as EvaluationFilter)
+                  }
+                >
+                  <option value="All">Tous les statuts</option>
+                  <option value="Compliant">Conformes</option>
+                  <option value="NonCompliant">Non conformes</option>
+                  <option value="NotApplicable">Non applicables</option>
+                  <option value="NotVerifiable">Non vérifiables</option>
+                  <option value="Error">Erreurs</option>
+                </select>
+              </label>
+            </div>
+
+            {filteredEvaluations.length === 0 ? (
+              <div className="evaluations-empty">
+                <ShieldCheck size={34} />
+
+                <strong>Aucun résultat disponible</strong>
+
+                <span>
+                  Les règles n’ont pas encore été évaluées ou aucun résultat ne
+                  correspond au filtre.
+                </span>
+              </div>
+            ) : (
+              <div className="evaluation-list">
+                {filteredEvaluations.map((evaluation) => {
+                  const evidenceItems = parseEvidence(evaluation.evidenceJson);
+
+                  return (
+                    <article className="evaluation-card" key={evaluation.id}>
+                      <div className="evaluation-card-header">
+                        <div>
+                          <div className="evaluation-identifiers">
+                            <span className="rule-code">
+                              {evaluation.ruleCode}
+                            </span>
+
+                            <span>{evaluation.cisControl}</span>
+
+                            <span>
+                              {evaluation.targetType === "EntraId"
+                                ? "Microsoft Entra ID"
+                                : "Active Directory"}
+                            </span>
+                          </div>
+
+                          <h3>{evaluation.ruleName}</h3>
+                        </div>
+
+                        <div className="evaluation-badges">
+                          <span
+                            className={`severity-badge ${evaluation.severity.toLowerCase()}`}
+                          >
+                            Sévérité {getSeverityLabel(evaluation.severity)}
+                          </span>
+
+                          <span
+                            className={`evaluation-status ${evaluation.status.toLowerCase()}`}
+                          >
+                            {evaluation.status === "Compliant" ? (
+                              <CheckCircle2 size={15} />
+                            ) : evaluation.status === "NonCompliant" ? (
+                              <XCircle size={15} />
+                            ) : (
+                              <AlertTriangle size={15} />
+                            )}
+
+                            {getEvaluationStatusLabel(evaluation.status)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="evaluation-card-meta">
                         <span>
-                          {evaluation.targetType === "EntraId"
-                            ? "Microsoft Entra ID"
-                            : "Active Directory"}
+                          <strong>{evaluation.findingCount}</strong> constat(s)
+                        </span>
+
+                        <span>
+                          Évaluée le {formatDate(evaluation.evaluatedAt)}
                         </span>
                       </div>
 
-                      <h3>{evaluation.ruleName}</h3>
-                    </div>
-
-                    <div className="evaluation-badges">
-                      <span
-                        className={`severity-badge ${evaluation.severity.toLowerCase()}`}
-                      >
-                        Sévérité {getSeverityLabel(evaluation.severity)}
-                      </span>
-
-                      <span
-                        className={`evaluation-status ${evaluation.status.toLowerCase()}`}
-                      >
-                        {evaluation.status === "Compliant" ? (
-                          <CheckCircle2 size={15} />
-                        ) : evaluation.status === "NonCompliant" ? (
-                          <XCircle size={15} />
-                        ) : (
-                          <AlertTriangle size={15} />
-                        )}
-
-                        {getEvaluationStatusLabel(evaluation.status)}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="evaluation-card-meta">
-                    <span>
-                      <strong>{evaluation.findingCount}</strong> constat(s)
-                    </span>
-                    <span>Évaluée le {formatDate(evaluation.evaluatedAt)}</span>
-                  </div>
-
-                  {evaluation.errorMessage && (
-                    <div className="rule-error-message">
-                      {evaluation.errorMessage}
-                    </div>
-                  )}
-
-                  {evaluation.recommendation && (
-                    <div className="recommendation-block">
-                      <strong>Recommandation</strong>
-                      <p>{evaluation.recommendation}</p>
-                    </div>
-                  )}
-
-                  {evaluation.evidenceJson && (
-                    <details className="evidence-details">
-                      <summary>
-                        Voir les preuves ({evaluation.findingCount})
-                      </summary>
-
-                      {evidenceItems.length > 0 ? (
-                        <div className="evidence-list">
-                          {evidenceItems.map((record, index) => (
-                            <article
-                              className="evidence-card"
-                              key={`${evaluation.id}-${index}`}
-                            >
-                              <h4>{getEvidenceTitle(record, index)}</h4>
-
-                              <dl>
-                                {Object.entries(record).map(([key, value]) => (
-                                  <div key={key}>
-                                    <dt>{getEvidenceLabel(key)}</dt>
-                                    <dd>{formatEvidenceValue(value)}</dd>
-                                  </div>
-                                ))}
-                              </dl>
-                            </article>
-                          ))}
+                      {evaluation.errorMessage && (
+                        <div className="rule-error-message">
+                          {evaluation.errorMessage}
                         </div>
-                      ) : (
-                        <pre className="raw-evidence">
-                          {evaluation.evidenceJson}
-                        </pre>
                       )}
-                    </details>
-                  )}
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </section>
+
+                      {evaluation.recommendation && (
+                        <div className="recommendation-block">
+                          <strong>Recommandation</strong>
+                          <p>{evaluation.recommendation}</p>
+                        </div>
+                      )}
+
+                      {evaluation.evidenceJson && (
+                        <details className="evidence-details">
+                          <summary>
+                            Voir les preuves ({evaluation.findingCount})
+                          </summary>
+
+                          {evidenceItems.length > 0 ? (
+                            <div className="evidence-list">
+                              {evidenceItems.map((record, index) => (
+                                <article
+                                  className="evidence-card"
+                                  key={`${evaluation.id}-${index}`}
+                                >
+                                  <h4>{getEvidenceTitle(record, index)}</h4>
+
+                                  <dl>
+                                    {Object.entries(record).map(
+                                      ([key, value]) => (
+                                        <div key={key}>
+                                          <dt>{getEvidenceLabel(key)}</dt>
+
+                                          <dd>{formatEvidenceValue(value)}</dd>
+                                        </div>
+                                      ),
+                                    )}
+                                  </dl>
+                                </article>
+                              ))}
+                            </div>
+                          ) : (
+                            <pre className="raw-evidence">
+                              {evaluation.evidenceJson}
+                            </pre>
+                          )}
+                        </details>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </>
+      ) : (
+        <AuditIdentitiesPanel auditId={audit.id} />
+      )}
     </div>
   );
 }
