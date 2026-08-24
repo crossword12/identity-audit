@@ -1,0 +1,154 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 260px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 18px;
+  background: var(--color-sidebar);
+  color: var(--color-card);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 8px 28px;
+  border-bottom: 1px solid rgb(255 255 255 / 18%);
+}
+
+.brand-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--color-primary);
+}
+
+.brand strong,
+.brand span {
+  display: block;
+}
+
+.brand strong {
+  font-size: 16px;
+}
+
+.brand span {
+  margin-top: 3px;
+  color: #d5e2ee;
+  font-size: 12px;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 28px;
+}
+
+.navigation a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  color: #e5edf5;
+  font-weight: 500;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.navigation a:hover {
+  background: #285f91;
+  color: var(--color-card);
+}
+
+.navigation a.active {
+  background: var(--color-primary);
+  color: var(--color-card);
+}
+
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding: 14px 10px 4px;
+  color: #e5edf5;
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 4px rgb(34 197 94 / 12%);
+}
+
+.main-area {
+  width: calc(100% - 260px);
+  margin-left: 260px;
+}
+
+.topbar {
+  height: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.topbar > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.environment-label {
+  color: #667085;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+}
+
+.security-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #027a48;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.page-content {
+  padding: 32px;
+}
+
+@media (max-width: 800px) {
+  .sidebar {
+    width: 210px;
+  }
+
+  .main-area {
+    width: calc(100% - 210px);
+    margin-left: 210px;
+  }
+
+  .topbar,
+  .page-content {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+}
