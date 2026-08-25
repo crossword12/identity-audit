@@ -5,7 +5,9 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileSearch,
+  KeyRound,
   LoaderCircle,
+  Network,
   RefreshCw,
   ShieldCheck,
   Users,
@@ -17,7 +19,9 @@ import {
   evaluateAuditRules,
   getAuditRuleEvaluations,
 } from "../../api/ruleEvaluationsApi";
+import AuditGroupsPanel from "../../components/audit-details/AuditGroupsPanel";
 import AuditIdentitiesPanel from "../../components/audit-details/AuditIdentitiesPanel";
+import AuditRolesPanel from "../../components/audit-details/AuditRolesPanel";
 import type { Audit, AuditStatus } from "../../types/audit";
 import type {
   RuleEvaluation,
@@ -26,7 +30,7 @@ import type {
 } from "../../types/ruleEvaluation";
 import "./AuditDetailsPage.css";
 
-type DetailTab = "results" | "identities";
+type DetailTab = "results" | "identities" | "groups" | "roles";
 type EvaluationFilter = "All" | RuleEvaluationStatus;
 type EvidenceRecord = Record<string, unknown>;
 
@@ -434,9 +438,35 @@ function AuditDetailsPage() {
           <Users size={18} />
           Identités
         </button>
+
+        <button
+          className={`audit-detail-tab ${
+            activeTab === "groups" ? "active" : ""
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "groups"}
+          onClick={() => setActiveTab("groups")}
+        >
+          <Network size={18} />
+          Groupes
+        </button>
+
+        <button
+          className={`audit-detail-tab ${
+            activeTab === "roles" ? "active" : ""
+          }`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "roles"}
+          onClick={() => setActiveTab("roles")}
+        >
+          <KeyRound size={18} />
+          Rôles
+        </button>
       </div>
 
-      {activeTab === "results" ? (
+      {activeTab === "results" && (
         <>
           <div className="evaluation-summary-grid">
             <article>
@@ -643,9 +673,15 @@ function AuditDetailsPage() {
             )}
           </section>
         </>
-      ) : (
+      )}
+
+      {activeTab === "identities" && (
         <AuditIdentitiesPanel auditId={audit.id} />
       )}
+
+      {activeTab === "groups" && <AuditGroupsPanel auditId={audit.id} />}
+
+      {activeTab === "roles" && <AuditRolesPanel auditId={audit.id} />}
     </div>
   );
 }
