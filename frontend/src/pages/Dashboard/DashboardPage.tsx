@@ -6,6 +6,7 @@ import {
   TriangleAlert,
   Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { getTargetDashboard } from "../../api/dashboardApi";
 import { getTargets } from "../../api/targetsApi";
 import type { DashboardAudit } from "../../types/dashboard";
@@ -28,6 +29,23 @@ function getScoreClass(score: number | null): string {
   if (score >= 80) return "success";
   if (score >= 50) return "warning";
   return "danger";
+}
+
+function getAuditStatusLabel(status: string): string {
+  switch (status) {
+    case "Pending":
+      return "En attente";
+    case "Running":
+      return "En cours";
+    case "Completed":
+      return "Terminé";
+    case "CompletedWithWarnings":
+      return "Terminé avec avertissements";
+    case "Failed":
+      return "Échec";
+    default:
+      return status;
+  }
 }
 
 function DashboardPage() {
@@ -67,6 +85,7 @@ function DashboardPage() {
       try {
         setLoading(true);
         setError("");
+
         const result = await getTargetDashboard(selectedTargetId);
         setAudits(result);
       } catch {
@@ -80,7 +99,12 @@ function DashboardPage() {
     void loadDashboard();
   }, [selectedTargetId, refreshKey]);
 
-  const latestAudit = audits[0];
+  const latestAudit = audits.find(
+    (audit) =>
+      audit.auditStatus === "Completed" ||
+      audit.auditStatus === "CompletedWithWarnings",
+  );
+
   const score = latestAudit?.complianceScore ?? null;
   const scoreClass = getScoreClass(score);
 
@@ -111,6 +135,8 @@ function DashboardPage() {
             <button
               type="button"
               title="Actualiser"
+              aria-label="Actualiser le tableau de bord"
+              disabled={loading}
               onClick={() => setRefreshKey((value) => value + 1)}
             >
               <RefreshCw size={18} />
@@ -127,183 +153,173 @@ function DashboardPage() {
         <div className="dashboard-message error-message">{error}</div>
       )}
 
-      {!loading && !error && !latestAudit && (
+      {!loading && !error && audits.length === 0 && (
         <div className="dashboard-message">
           Aucun audit disponible pour cette cible.
         </div>
       )}
 
-      {!loading && !error && latestAudit && (
+      {!loading && !error && audits.length > 0 && (
         <>
-          <div className="metrics-grid">
-            <article className="metric-card">
-              <div className="metric-icon blue">
-                <Users size={23} />
-              </div>
-              <div>
-                <span>Identités</span>
-                <strong>{latestAudit.totalIdentities}</strong>
-                <small>
-                  {latestAudit.enabledIdentities} actives /{" "}
-                  {latestAudit.disabledIdentities} inactives
-                </small>
-              </div>
-            </article>
+          {latestAudit ? (
+            <>
+              <div className="metrics-grid">
+                <article className="metric-card">
+                  <div className="metric-icon blue">
+                    <Users size={22} />
+                  </div>
 
-            <article className="metric-card">
-              <div className="metric-icon orange">
-                <ShieldAlert size={23} />
-              </div>
-              <div>
-                <span>Comptes privilégiés</span>
-                <strong>{latestAudit.privilegedIdentities}</strong>
-                <small>
-                  {latestAudit.serviceAccounts} compte(s) de service
-                </small>
-              </div>
-            </article>
+                  <div>
+                    <span>Identités</span>
+                    <strong>{latestAudit.totalIdentities}</strong>
+                    <small>
+                      {latestAudit.enabledIdentities} actives ·{" "}
+                      {latestAudit.disabledIdentities} inactives
+                    </small>
+                  </div>
+                </article>
 
-            <article className="metric-card">
-              <div className="metric-icon red">
-                <TriangleAlert size={23} />
-              </div>
-              <div>
-                <span>Constats</span>
-                <strong>{latestAudit.totalFindings}</strong>
-                <small>
-                  {latestAudit.nonCompliantRules} règle(s) non conforme(s)
-                </small>
-              </div>
-            </article>
+                <article className="metric-card">
+                  <div className="metric-icon orange">
+                    <ShieldAlert size={22} />
+                  </div>
 
-            <article className={`metric-card score-card ${scoreClass}`}>
-              <div className="metric-icon">
-                <Gauge size={23} />
-              </div>
-              <div>
-                <span>Score CIS</span>
-                <strong>
-                  {score === null ? "N/A" : `${score.toFixed(2)} %`}
-                </strong>
-                <div className="score-progress">
-                  <span style={{ width: `${score ?? 0}%` }} />
-                </div>
-              </div>
-            </article>
-          </div>
+                  <div>
+                    <span>Comptes privilégiés</span>
+                    <strong>{latestAudit.privilegedIdentities}</strong>
+                    <small>
+                      {latestAudit.serviceAccounts} compte(s) de service
+                    </small>
+                  </div>
+                </article>
 
-          <div className="dashboard-panels">
-            <section className="dashboard-panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>Synthèse des identités</h2>
-                  <p>Dernier audit terminé</p>
-                </div>
-                <span className="completed-badge">
-                  {latestAudit.auditStatus}
-                </span>
+                <article className="metric-card">
+                  <div className="metric-icon red">
+                    <TriangleAlert size={22} />
+                  </div>
+
+                  <div>
+                    <span>Constats</span>
+                    <strong>{latestAudit.totalFindings}</strong>
+                    <small>
+                      {latestAudit.nonCompliantRules} règle(s) non conforme(s)
+                    </small>
+                  </div>
+                </article>
+
+                <article className={`metric-card score-card ${scoreClass}`}>
+                  <div className="metric-icon">
+                    <Gauge size={22} />
+                  </div>
+
+                  <div>
+                    <span>Score CIS</span>
+                    <strong>
+                      {score === null ? "N/A" : `${score.toFixed(2)} %`}
+                    </strong>
+
+                    <div className="score-progress">
+                      <span style={{ width: `${score ?? 0}%` }} />
+                    </div>
+                  </div>
+                </article>
               </div>
 
-              <div className="summary-list">
-                <div>
-                  <span>Identités actives</span>
-                  <strong>{latestAudit.enabledIdentities}</strong>
-                </div>
-                <div>
-                  <span>Identités désactivées</span>
-                  <strong>{latestAudit.disabledIdentities}</strong>
-                </div>
-                <div>
-                  <span>Comptes privilégiés</span>
-                  <strong>{latestAudit.privilegedIdentities}</strong>
-                </div>
-                <div>
-                  <span>Comptes de service</span>
-                  <strong>{latestAudit.serviceAccounts}</strong>
-                </div>
-                <div>
-                  <span>Comptes invités</span>
-                  <strong>{latestAudit.guestAccounts}</strong>
-                </div>
-                <div>
-                  <span>Comptes verrouillés</span>
-                  <strong>{latestAudit.lockedAccounts}</strong>
-                </div>
-              </div>
-            </section>
+              <section className="dashboard-panel dashboard-cis-panel">
+                <div className="dashboard-panel-heading">
+                  <div>
+                    <h2>Résultats CIS</h2>
+                    <p>Répartition des constats du dernier audit terminé</p>
+                  </div>
 
-            <section className="dashboard-panel">
-              <div className="panel-heading">
-                <div>
-                  <h2>Résultats CIS</h2>
-                  <p>Répartition des constats par gravité</p>
+                  <span className="findings-total">
+                    {latestAudit.totalFindings} constat(s)
+                  </span>
                 </div>
-              </div>
 
-              <div className="severity-list">
-                <div>
-                  <span className="severity-label critical">Critique</span>
-                  <strong>{latestAudit.criticalFindings}</strong>
-                </div>
-                <div>
-                  <span className="severity-label high">Élevée</span>
-                  <strong>{latestAudit.highFindings}</strong>
-                </div>
-                <div>
-                  <span className="severity-label medium">Moyenne</span>
-                  <strong>{latestAudit.mediumFindings}</strong>
-                </div>
-                <div>
-                  <span className="severity-label low">Faible</span>
-                  <strong>{latestAudit.lowFindings}</strong>
-                </div>
-              </div>
+                <div className="severity-grid">
+                  <article className="severity-card critical">
+                    <span>Critique</span>
+                    <strong>{latestAudit.criticalFindings}</strong>
+                  </article>
 
-              <div className="cis-controls">
-                <div>
-                  <span>CIS Control 5</span>
-                  <strong>{latestAudit.cisControl5Findings} constats</strong>
-                </div>
-                <div>
-                  <span>CIS Control 6</span>
-                  <strong>{latestAudit.cisControl6Findings} constats</strong>
-                </div>
-              </div>
-            </section>
-          </div>
+                  <article className="severity-card high">
+                    <span>Élevée</span>
+                    <strong>{latestAudit.highFindings}</strong>
+                  </article>
 
-          <section className="dashboard-panel audits-panel">
-            <div className="panel-heading">
+                  <article className="severity-card medium">
+                    <span>Moyenne</span>
+                    <strong>{latestAudit.mediumFindings}</strong>
+                  </article>
+
+                  <article className="severity-card low">
+                    <span>Faible</span>
+                    <strong>{latestAudit.lowFindings}</strong>
+                  </article>
+                </div>
+
+                <div className="dashboard-cis-controls">
+                  <div>
+                    <span>CIS Control 5</span>
+                    <strong>
+                      {latestAudit.cisControl5Findings} constat(s)
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>CIS Control 6</span>
+                    <strong>
+                      {latestAudit.cisControl6Findings} constat(s)
+                    </strong>
+                  </div>
+                </div>
+              </section>
+            </>
+          ) : (
+            <div className="dashboard-message">
+              Aucun audit terminé n’est disponible pour cette cible.
+            </div>
+          )}
+
+          <section className="dashboard-panel dashboard-audits-panel">
+            <div className="dashboard-panel-heading">
               <div>
                 <h2>Audits récents</h2>
-                <p>Historique de la cible sélectionnée</p>
+                <p>Trois derniers audits de la cible sélectionnée</p>
               </div>
+
+              <Link className="view-all-audits" to="/audits">
+                Voir tous les audits →
+              </Link>
             </div>
 
-            <div className="table-wrapper">
-              <table>
+            <div className="dashboard-table-wrapper">
+              <table className="dashboard-table">
                 <thead>
                   <tr>
                     <th>Date</th>
                     <th>Statut</th>
                     <th>Identités</th>
-                    <th>Règles évaluées</th>
-                    <th>Non conformes</th>
                     <th>Score CIS</th>
                   </tr>
                 </thead>
+
                 <tbody>
-                  {audits.slice(0, 5).map((audit) => (
+                  {audits.slice(0, 3).map((audit) => (
                     <tr key={audit.auditId}>
                       <td>{formatDate(audit.createdAt)}</td>
+
                       <td>
-                        <span className="completed-badge">
-                          {audit.auditStatus}
+                        <span
+                          className={`dashboard-audit-status ${audit.auditStatus.toLowerCase()}`}
+                        >
+                          {getAuditStatusLabel(audit.auditStatus)}
                         </span>
                       </td>
+
                       <td>{audit.totalIdentities}</td>
-                      <td>{audit.evaluatedRules}</td>
-                      <td>{audit.nonCompliantRules}</td>
+
                       <td>
                         {audit.complianceScore === null
                           ? "Non évalué"

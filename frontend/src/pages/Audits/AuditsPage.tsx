@@ -414,7 +414,7 @@ function AuditsPage() {
                               to={`/audits/${audit.id}`}
                             >
                               <Eye size={16} />
-                              Résultats
+                              Détails
                             </Link>
                           </div>
                         </td>
