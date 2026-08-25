@@ -11,6 +11,8 @@ using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
+using IdentityAudit.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 
@@ -43,6 +45,36 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+builder.Services.AddAuthentication();
+
+builder.Services.AddDataProtection();
+
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+
+        options.Password.RequiredLength = 12;
+        options.Password.RequireDigit = true;
+        options.Password.RequireLowercase = true;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireNonAlphanumeric = true;
+        options.Password.RequiredUniqueChars = 4;
+
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan =
+            TimeSpan.FromMinutes(15);
+
+        options.SignIn.RequireConfirmedEmail = false;
+    })
+    .AddRoles<IdentityRole<Guid>>()
+    .AddEntityFrameworkStores<IdentityAuditDbContext>()
+    .AddSignInManager()
+    .AddDefaultTokenProviders();
+
+builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
@@ -79,6 +111,39 @@ using (var scope = app.Services.CreateScope())
     Console.WriteLine(
         "Catalogue CIS initialisé : " +
         $"{insertedRuleCount} nouvelle(s) règle(s) ajoutée(s).");
+
+    var roleManager =
+        scope.ServiceProvider
+            .GetRequiredService<
+                RoleManager<IdentityRole<Guid>>>();
+
+    var userManager =
+        scope.ServiceProvider
+            .GetRequiredService<
+                UserManager<ApplicationUser>>();
+
+    var identitySeedResult =
+        await ApplicationIdentitySeeder.SeedAsync(
+            roleManager,
+            userManager,
+            app.Configuration[
+                "Authentication:InitialAdmin:Email"],
+            app.Configuration[
+                "Authentication:InitialAdmin:DisplayName"],
+            app.Configuration[
+                "Authentication:InitialAdmin:Password"]);
+
+    Console.WriteLine(
+        "Rôles applicatifs initialisés : " +
+        $"{identitySeedResult.CreatedRoleCount} " +
+        "nouveau(x) rôle(s).");
+
+    Console.WriteLine(
+        identitySeedResult.AdministratorConfigured
+            ? identitySeedResult.AdministratorCreated
+                ? "Administrateur initial créé."
+                : "Administrateur initial déjà présent."
+            : "Aucun administrateur initial configuré.");
 }
 
 if (app.Environment.IsDevelopment())

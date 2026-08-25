@@ -1,3 +1,6 @@
+using IdentityAudit.Infrastructure.Authentication;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using AuditEntity = IdentityAudit.Domain.Entities.Audit;
 using TargetEntity = IdentityAudit.Domain.Entities.Target;
@@ -18,7 +21,10 @@ using RuleEvaluationEntity =
 namespace IdentityAudit.Infrastructure.Persistence;
 
 public sealed class IdentityAuditDbContext
-    : DbContext
+    : IdentityDbContext<
+        ApplicationUser,
+        IdentityRole<Guid>,
+        Guid>
 {
     public IdentityAuditDbContext(
         DbContextOptions<IdentityAuditDbContext> options)
@@ -55,6 +61,7 @@ public sealed class IdentityAuditDbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        ConfigureApplicationIdentity(modelBuilder);
         ConfigureTarget(modelBuilder);
         ConfigureAudit(modelBuilder);
         ConfigureDirectoryIdentity(modelBuilder);
@@ -464,5 +471,47 @@ public sealed class IdentityAuditDbContext
                     evaluation.AuditRuleId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+    }
+    private static void ConfigureApplicationIdentity(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<ApplicationUser>(entity =>
+        {
+            entity.ToTable("ApplicationUsers");
+
+            entity.Property(user => user.DisplayName)
+                .HasMaxLength(255)
+                .IsRequired();
+
+            entity.Property(user => user.Email)
+                .HasMaxLength(320);
+
+            entity.Property(user => user.IsEnabled)
+                .IsRequired();
+
+            entity.Property(user => user.CreatedAt)
+                .IsRequired();
+
+            entity.Property(user => user.UpdatedAt)
+                .IsRequired();
+        });
+
+        modelBuilder.Entity<IdentityRole<Guid>>()
+            .ToTable("ApplicationRoles");
+
+        modelBuilder.Entity<IdentityUserRole<Guid>>()
+            .ToTable("ApplicationUserRoles");
+
+        modelBuilder.Entity<IdentityUserClaim<Guid>>()
+            .ToTable("ApplicationUserClaims");
+
+        modelBuilder.Entity<IdentityUserLogin<Guid>>()
+            .ToTable("ApplicationUserLogins");
+
+        modelBuilder.Entity<IdentityRoleClaim<Guid>>()
+            .ToTable("ApplicationRoleClaims");
+
+        modelBuilder.Entity<IdentityUserToken<Guid>>()
+            .ToTable("ApplicationUserTokens");
     }
 }
