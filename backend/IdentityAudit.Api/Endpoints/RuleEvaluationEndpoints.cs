@@ -1,4 +1,5 @@
 using IdentityAudit.Application.RuleEvaluations;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -10,7 +11,9 @@ public static class RuleEvaluationEndpoints
     {
         var group = endpoints
             .MapGroup("/api/audits/{auditId:guid}")
-            .WithTags("Rule evaluations");
+            .WithTags("Rule evaluations")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapPost(
                 "/evaluate",
@@ -21,7 +24,9 @@ public static class RuleEvaluationEndpoints
             .ProducesProblem(
                 StatusCodes.Status404NotFound)
             .ProducesProblem(
-                StatusCodes.Status409Conflict);
+                StatusCodes.Status409Conflict)
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         group.MapGet(
                 "/rule-evaluations",

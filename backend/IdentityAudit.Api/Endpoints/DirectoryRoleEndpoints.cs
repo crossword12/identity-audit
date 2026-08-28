@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.Roles;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -11,13 +12,17 @@ public static class DirectoryRoleEndpoints
     {
         var group = endpoints
             .MapGroup("/api/audits/{auditId:guid}/roles")
-            .WithTags("Directory Roles");
+            .WithTags("Directory Roles")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapGet("", GetByAuditIdAsync)
             .WithName("GetDirectoryRolesByAuditId");
 
         group.MapPost("", ImportAsync)
-            .WithName("ImportDirectoryRoles");
+            .WithName("ImportDirectoryRoles")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         return endpoints;
     }

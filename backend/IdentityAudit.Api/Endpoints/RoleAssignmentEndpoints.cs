@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.RoleAssignments;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -12,13 +13,17 @@ public static class RoleAssignmentEndpoints
         var group = endpoints
             .MapGroup(
                 "/api/audits/{auditId:guid}/role-assignments")
-            .WithTags("Role Assignments");
+            .WithTags("Role Assignments")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapGet("", GetByAuditIdAsync)
             .WithName("GetRoleAssignmentsByAuditId");
 
         group.MapPost("", ImportAsync)
-            .WithName("ImportRoleAssignments");
+            .WithName("ImportRoleAssignments")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         return endpoints;
     }

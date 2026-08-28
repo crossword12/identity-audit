@@ -1,5 +1,6 @@
 using IdentityAudit.Api.Endpoints;
 using IdentityAudit.Api.Authentication;
+using IdentityAudit.Api.Authorization;
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.Identities;
 using IdentityAudit.Application.Targets;
@@ -82,7 +83,7 @@ builder.Services
 builder.Services.AddJwtAuthentication(
     builder.Configuration);
 
-builder.Services.AddAuthorization();
+builder.Services.AddIdentityAuditAuthorization();
 
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IAuditService, AuditService>();

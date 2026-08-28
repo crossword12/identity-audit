@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.GroupMemberships;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -12,13 +13,17 @@ public static class GroupMembershipEndpoints
         var group = endpoints
             .MapGroup(
                 "/api/audits/{auditId:guid}/group-memberships")
-            .WithTags("Group Memberships");
+            .WithTags("Group Memberships")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapGet("", GetByAuditIdAsync)
             .WithName("GetGroupMembershipsByAuditId");
 
         group.MapPost("", ImportAsync)
-            .WithName("ImportGroupMemberships");
+            .WithName("ImportGroupMemberships")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         return endpoints;
     }

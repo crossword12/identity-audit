@@ -1,6 +1,6 @@
 using System.Security.Claims;
 using IdentityAudit.Application.ApplicationUsers;
-using IdentityAudit.Application.Authentication;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -14,8 +14,7 @@ public static class ApplicationUserEndpoints
             .MapGroup("/api/application-users")
             .WithTags("Application Users")
             .RequireAuthorization(
-                policy => policy.RequireRole(
-                    ApplicationRoles.Administrator));
+                AuthorizationPolicies.CanManageUsers);
 
         group.MapGet("/", GetAllAsync)
             .WithName("GetApplicationUsers");

@@ -1,4 +1,5 @@
 using IdentityAudit.Application.Audits;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -9,7 +10,9 @@ public static class AuditEndpoints
     {
         var group = endpoints
             .MapGroup("/api/audits")
-            .WithTags("Audits");
+            .WithTags("Audits")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapGet("", GetAllAsync)
             .WithName("GetAudits");
@@ -18,13 +21,19 @@ public static class AuditEndpoints
             .WithName("GetAuditById");
 
         group.MapPost("", CreateAsync)
-            .WithName("CreateAudit");
+            .WithName("CreateAudit")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         group.MapPost("/{id:guid}/start", StartAsync)
-            .WithName("StartAudit");
+            .WithName("StartAudit")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         group.MapPost("/{id:guid}/complete", CompleteAsync)
-            .WithName("CompleteAudit");
+            .WithName("CompleteAudit")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanManageAudits);
 
         return endpoints;
     }

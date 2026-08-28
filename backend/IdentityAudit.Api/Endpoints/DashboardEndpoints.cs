@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Application.Targets;
+using IdentityAudit.Api.Authorization;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -10,7 +11,9 @@ public static class DashboardEndpoints
     {
         var group = endpoints
             .MapGroup("/api/dashboard")
-            .WithTags("Dashboard");
+            .WithTags("Dashboard")
+            .RequireAuthorization(
+                AuthorizationPolicies.CanReadAuditData);
 
         group.MapGet(
                 "/targets/{targetId:guid}",
