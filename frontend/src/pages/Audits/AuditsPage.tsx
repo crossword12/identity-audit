@@ -18,6 +18,8 @@ import { completeAudit, getAudits, startAudit } from "../../api/auditsApi";
 import CreateAuditModal from "../../components/audits/CreateAuditModal";
 import type { Audit, AuditStatus } from "../../types/audit";
 import "./AuditsPage.css";
+import { canManageAudits } from "../../auth/authorization";
+import { useAuth } from "../../auth/useAuth";
 
 type StatusFilter = "All" | AuditStatus;
 
@@ -74,6 +76,8 @@ function getStatusIcon(status: AuditStatus) {
 }
 
 function AuditsPage() {
+  const { user } = useAuth();
+  const mayManageAudits = canManageAudits(user);
   const [audits, setAudits] = useState<Audit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -115,6 +119,9 @@ function AuditsPage() {
   }, [refreshKey]);
 
   function handleAuditCreated(createdAudit: Audit) {
+    if (!mayManageAudits) {
+      return;
+    }
     setAudits((currentAudits) => [createdAudit, ...currentAudits]);
 
     setIsCreateModalOpen(false);
@@ -143,7 +150,10 @@ function AuditsPage() {
   ).length;
 
   async function handleAuditAction(audit: Audit) {
-    if (audit.status !== "Pending" && audit.status !== "Running") {
+    if (
+      !mayManageAudits ||
+      (audit.status !== "Pending" && audit.status !== "Running")
+    ) {
       return;
     }
 
@@ -204,14 +214,16 @@ function AuditsPage() {
             Actualiser
           </button>
 
-          <button
-            className="new-audit-button"
-            type="button"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <Plus size={18} />
-            Nouvel audit
-          </button>
+          {mayManageAudits && (
+            <button
+              className="new-audit-button"
+              type="button"
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <Plus size={18} />
+              Nouvel audit
+            </button>
+          )}
         </div>
       </div>
 
@@ -371,7 +383,7 @@ function AuditsPage() {
 
                         <td>
                           <div className="audit-row-actions">
-                            {audit.status === "Pending" && (
+                            {mayManageAudits && audit.status === "Pending" && (
                               <button
                                 className="audit-action-button start"
                                 type="button"
@@ -390,7 +402,7 @@ function AuditsPage() {
                               </button>
                             )}
 
-                            {audit.status === "Running" && (
+                            {mayManageAudits && audit.status === "Running" && (
                               <button
                                 className="audit-action-button complete"
                                 type="button"
@@ -428,7 +440,7 @@ function AuditsPage() {
         </section>
       )}
 
-      {isCreateModalOpen && (
+      {mayManageAudits && isCreateModalOpen && (
         <CreateAuditModal
           onClose={() => setIsCreateModalOpen(false)}
           onCreated={handleAuditCreated}

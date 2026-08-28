@@ -15,6 +15,8 @@ import { getTargets, testTargetConnection } from "../../api/targetsApi";
 import type { Target } from "../../types/target";
 import "./TargetsPage.css";
 import TargetFormModal from "../../components/targets/TargetFormModal";
+import { canManageTargets } from "../../auth/authorization";
+import { useAuth } from "../../auth/useAuth";
 
 interface ConnectionFeedback {
   succeeded: boolean;
@@ -54,6 +56,8 @@ function getConfigurationSummary(target: Target): string {
 }
 
 function TargetsPage() {
+  const { user } = useAuth();
+  const mayManageTargets = canManageTargets(user);
   const [targets, setTargets] = useState<Target[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -82,6 +86,9 @@ function TargetsPage() {
   }, []);
 
   async function handleTestConnection(targetId: string) {
+    if (!mayManageTargets) {
+      return;
+    }
     try {
       setTestingId(targetId);
 
@@ -152,17 +159,19 @@ function TargetsPage() {
             {targets.length} cible(s)
           </div>
 
-          <button
-            className="new-target-button"
-            type="button"
-            onClick={() => {
-              setEditingTarget(null);
-              setIsFormOpen(true);
-            }}
-          >
-            <Plus size={18} />
-            Nouvelle cible
-          </button>
+          {mayManageTargets && (
+            <button
+              className="new-target-button"
+              type="button"
+              onClick={() => {
+                setEditingTarget(null);
+                setIsFormOpen(true);
+              }}
+            >
+              <Plus size={18} />
+              Nouvelle cible
+            </button>
+          )}
         </div>
       </div>
 
@@ -252,40 +261,42 @@ function TargetsPage() {
                   </div>
                 )}
 
-                <div className="target-card-actions">
-                  <button
-                    className="edit-target-button"
-                    type="button"
-                    onClick={() => {
-                      setEditingTarget(target);
-                      setIsFormOpen(true);
-                    }}
-                  >
-                    <Pencil size={18} />
-                    Modifier
-                  </button>
+                {mayManageTargets && (
+                  <div className="target-card-actions">
+                    <button
+                      className="edit-target-button"
+                      type="button"
+                      onClick={() => {
+                        setEditingTarget(target);
+                        setIsFormOpen(true);
+                      }}
+                    >
+                      <Pencil size={18} />
+                      Modifier
+                    </button>
 
-                  <button
-                    className="test-connection-button"
-                    type="button"
-                    disabled={isTesting}
-                    onClick={() => void handleTestConnection(target.id)}
-                  >
-                    {isTesting ? (
-                      <LoaderCircle className="spinning" size={18} />
-                    ) : (
-                      <PlugZap size={18} />
-                    )}
+                    <button
+                      className="test-connection-button"
+                      type="button"
+                      disabled={isTesting}
+                      onClick={() => void handleTestConnection(target.id)}
+                    >
+                      {isTesting ? (
+                        <LoaderCircle className="spinning" size={18} />
+                      ) : (
+                        <PlugZap size={18} />
+                      )}
 
-                    {isTesting ? "Test en cours..." : "Tester la connexion"}
-                  </button>
-                </div>
+                      {isTesting ? "Test en cours..." : "Tester la connexion"}
+                    </button>
+                  </div>
+                )}
               </article>
             );
           })}
         </div>
       )}
-      {isFormOpen && (
+      {mayManageTargets && isFormOpen && (
         <TargetFormModal
           target={editingTarget}
           onClose={() => {
