@@ -1,4 +1,5 @@
 using IdentityAudit.Api.Endpoints;
+using IdentityAudit.Api.Authentication;
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.Identities;
 using IdentityAudit.Application.Targets;
@@ -8,6 +9,7 @@ using IdentityAudit.Application.Roles;
 using IdentityAudit.Application.RoleAssignments;
 using IdentityAudit.Application.RuleEvaluations;
 using IdentityAudit.Application.Dashboard;
+using IdentityAudit.Application.Authentication;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
@@ -46,7 +48,9 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<IdentityAuditDbContext>(options =>
     options.UseNpgsql(connectionString));
 
-builder.Services.AddAuthentication();
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection(
+        JwtOptions.SectionName));
 
 builder.Services.AddDataProtection();
 
@@ -74,6 +78,9 @@ builder.Services
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
+builder.Services.AddJwtAuthentication(
+    builder.Configuration);
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<ITargetService, TargetService>();
@@ -95,6 +102,14 @@ builder.Services.AddScoped<
     IAuditRuleEvaluationService,
     AuditRuleEvaluationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+
+builder.Services.Configure<JwtOptions>(
+    builder.Configuration.GetSection(
+        JwtOptions.SectionName));
+
+builder.Services.AddScoped<
+    IAccessTokenService,
+    JwtTokenService>();
 
 var app = builder.Build();
 
@@ -154,6 +169,9 @@ if (app.Environment.IsDevelopment())
 app.UseCors("Frontend");
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapApiEndpoints();
 
