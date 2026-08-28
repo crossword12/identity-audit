@@ -10,6 +10,7 @@ using IdentityAudit.Application.RoleAssignments;
 using IdentityAudit.Application.RuleEvaluations;
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Application.Authentication;
+using IdentityAudit.Application.ApplicationUsers;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
@@ -110,6 +111,10 @@ builder.Services.Configure<JwtOptions>(
 builder.Services.AddScoped<
     IAccessTokenService,
     JwtTokenService>();
+
+builder.Services.AddScoped<
+    IApplicationUserService,
+    ApplicationUserService>();
 
 var app = builder.Build();
 

@@ -6,6 +6,7 @@ public static class ApiEndpoints
         this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapAuthenticationEndpoints();
+        endpoints.MapApplicationUserEndpoints();
         endpoints.MapHealthEndpoints();
         endpoints.MapTargetEndpoints();
         endpoints.MapAuditEndpoints();
