@@ -1,8 +1,47 @@
-import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, ScanSearch, Server, ShieldCheck } from "lucide-react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  LogOut,
+  ScanSearch,
+  Server,
+  ShieldCheck,
+} from "lucide-react";
+import { useAuth } from "../../auth/useAuth";
+import type { ApplicationRole } from "../../types/auth";
 import "./AppLayout.css";
 
+const roleLabels: Record<ApplicationRole, string> = {
+  Administrator: "Administrateur",
+  Auditor: "Auditeur",
+  Reader: "Lecteur",
+};
+
+function getInitials(displayName: string): string {
+  return displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
 function AppLayout() {
+  const { user, logout } = useAuth();
+
+  const navigate = useNavigate();
+
+  const displayedRoles =
+    user?.roles.map((role) => roleLabels[role]).join(" · ") ?? "";
+
+  function handleLogout() {
+    logout();
+
+    navigate("/login", {
+      replace: true,
+    });
+  }
+
   return (
     <div className="app-layout">
       <aside className="sidebar">
@@ -13,7 +52,7 @@ function AppLayout() {
 
           <div>
             <strong>Identity Audit</strong>
-            <span>CIS Controls 5 & 6</span>
+            <span>CIS Controls 5 &amp; 6</span>
           </div>
         </div>
 
@@ -44,12 +83,39 @@ function AppLayout() {
         <header className="topbar">
           <div>
             <span className="environment-label">ENVIRONNEMENT</span>
+
             <strong>Audit des identités</strong>
           </div>
 
-          <div className="security-status">
-            <ShieldCheck size={18} />
-            Système sécurisé
+          <div className="topbar-actions">
+            <div className="security-status">
+              <ShieldCheck size={18} />
+              Système sécurisé
+            </div>
+
+            {user && (
+              <div className="user-account">
+                <span className="user-avatar">
+                  {getInitials(user.displayName)}
+                </span>
+
+                <div className="user-identity">
+                  <strong>{user.displayName}</strong>
+
+                  <span>{displayedRoles}</span>
+                </div>
+
+                <button
+                  type="button"
+                  className="logout-button"
+                  onClick={handleLogout}
+                  aria-label="Se déconnecter"
+                  title="Se déconnecter"
+                >
+                  <LogOut size={19} />
+                </button>
+              </div>
+            )}
           </div>
         </header>
 
