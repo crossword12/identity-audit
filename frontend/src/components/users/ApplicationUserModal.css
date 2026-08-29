@@ -1,0 +1,245 @@
+.application-user-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 58%);
+}
+
+.application-user-modal {
+  width: min(620px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-radius: 14px;
+  background: var(--color-card);
+  box-shadow: 0 24px 70px rgb(15 23 42 / 25%);
+}
+
+.application-user-modal-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 14px;
+  align-items: start;
+  padding: 22px 24px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.application-user-modal-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 10px;
+  background: #edf5fc;
+  color: var(--color-primary);
+}
+
+.application-user-modal-header h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 20px;
+}
+
+.application-user-modal-header p {
+  margin: 5px 0 0;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+}
+
+.application-user-modal-close {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.application-user-modal-close:hover {
+  background: #f2f4f7;
+  color: var(--color-text);
+}
+
+.application-user-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+}
+
+.application-user-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.application-user-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.application-user-field input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  outline: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+}
+
+.application-user-field input:focus {
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 3px rgb(47 117 181 / 12%);
+}
+
+.application-user-field small {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.application-user-password {
+  position: relative;
+}
+
+.application-user-password input {
+  padding-right: 46px;
+}
+
+.application-user-password button {
+  position: absolute;
+  inset: 4px 4px 4px auto;
+  display: grid;
+  width: 38px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.application-user-password button:hover {
+  background: #f2f4f7;
+}
+
+.application-user-roles {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.application-user-roles legend {
+  margin-bottom: 9px;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.application-user-role-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.application-user-role-options label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.application-user-role-options input,
+.application-user-enabled input {
+  accent-color: var(--color-primary);
+}
+
+.application-user-enabled {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.application-user-modal-error {
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: var(--color-danger);
+  font-size: 13px;
+}
+
+.application-user-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.application-user-modal-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.application-user-secondary-button {
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+}
+
+.application-user-primary-button {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.application-user-modal-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 640px) {
+  .application-user-form-grid,
+  .application-user-role-options {
+    grid-template-columns: 1fr;
+  }
+}
+.application-user-role-options strong,
+.application-user-role-options small {
+  display: block;
+}
+
+.application-user-role-options small {
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+}

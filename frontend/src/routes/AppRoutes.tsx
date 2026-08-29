@@ -6,6 +6,9 @@ import AuditsPage from "../pages/Audits/AuditsPage";
 import DashboardPage from "../pages/Dashboard/DashboardPage";
 import LoginPage from "../pages/Login/LoginPage";
 import TargetsPage from "../pages/Targets/TargetsPage";
+import { ApplicationRoles } from "../auth/authorization";
+import RequireRole from "../auth/RequireRole";
+import UsersPage from "../pages/Users/UsersPage";
 
 function AppRoutes() {
   return (
@@ -22,6 +25,13 @@ function AppRoutes() {
             <Route path="audits" element={<AuditsPage />} />
 
             <Route path="audits/:auditId" element={<AuditDetailsPage />} />
+            <Route
+              element={
+                <RequireRole allowedRoles={[ApplicationRoles.Administrator]} />
+              }
+            >
+              <Route path="users" element={<UsersPage />} />
+            </Route>
           </Route>
         </Route>
 

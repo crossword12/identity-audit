@@ -5,9 +5,11 @@ import {
   ScanSearch,
   Server,
   ShieldCheck,
+  Users,
 } from "lucide-react";
 import { useAuth } from "../../auth/useAuth";
 import type { ApplicationRole } from "../../types/auth";
+import { canManageUsers } from "../../auth/authorization";
 import "./AppLayout.css";
 
 const roleLabels: Record<ApplicationRole, string> = {
@@ -28,6 +30,7 @@ function getInitials(displayName: string): string {
 
 function AppLayout() {
   const { user, logout } = useAuth();
+  const mayManageUsers = canManageUsers(user);
 
   const navigate = useNavigate();
 
@@ -71,6 +74,13 @@ function AppLayout() {
             <ScanSearch size={20} />
             Audits
           </NavLink>
+
+          {mayManageUsers && (
+            <NavLink to="/users">
+              <Users size={20} />
+              Utilisateurs
+            </NavLink>
+          )}
         </nav>
 
         <div className="sidebar-footer">

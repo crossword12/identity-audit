@@ -1,4 +1,7 @@
-import type { AuthenticatedUser } from "../types/auth";
+import type {
+  ApplicationRole,
+  AuthenticatedUser,
+} from "../types/auth";
 
 export const ApplicationRoles = {
   Administrator: "Administrator",
@@ -6,10 +9,7 @@ export const ApplicationRoles = {
   Reader: "Reader",
 } as const;
 
-export type ApplicationRole =
-  (typeof ApplicationRoles)[keyof typeof ApplicationRoles];
-
-function hasAnyRole(
+export function hasAnyRole(
   user: AuthenticatedUser | null,
   roles: readonly ApplicationRole[],
 ): boolean {
