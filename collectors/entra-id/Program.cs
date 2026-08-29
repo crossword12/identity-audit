@@ -1,4 +1,5 @@
 ﻿using IdentityAudit.EntraCollector.Services;
+using IdentityAudit.Collector.Common.Authentication;
 
 const string defaultApiBaseUrl =
     "http://localhost:5173";
@@ -255,6 +256,16 @@ try
 
             Timeout = TimeSpan.FromSeconds(30)
         };
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Authentification du collecteur auprès de l'API...");
+
+    await IdentityAuditApiAuthenticator.AuthenticateAsync(
+        httpClient);
+
+    Console.WriteLine(
+        "Authentification réussie.");
 
     var apiClient =
         new IdentityAuditApiClient(httpClient);

@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.EntraCollecto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.ActiveDirectoryCollector", "..\collectors\active-directory\IdentityAudit.ActiveDirectoryCollector.csproj", "{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Collector.Common", "..\collectors\common\IdentityAudit.Collector.Common\IdentityAudit.Collector.Common.csproj", "{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x64.Build.0 = Release|Any CPU
 		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x86.ActiveCfg = Release|Any CPU
 		{DF450B97-BF29-4B8D-8A64-C4DF2AA56894}.Release|x86.Build.0 = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|x64.Build.0 = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Debug|x86.Build.0 = Debug|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x64.ActiveCfg = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x64.Build.0 = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x86.ActiveCfg = Release|Any CPU
+		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

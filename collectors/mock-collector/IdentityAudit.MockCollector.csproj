@@ -13,4 +13,8 @@
     </None>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\common\IdentityAudit.Collector.Common\IdentityAudit.Collector.Common.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using System.Text.Json;
+using IdentityAudit.Collector.Common.Authentication;
 
 const string defaultApiBaseUrl = "http://localhost:5173";
 
@@ -58,6 +59,15 @@ try
     {
         BaseAddress = new Uri(apiBaseUrl)
     };
+
+    Console.WriteLine(
+    "Authentification du collecteur auprès de l'API...");
+
+    await IdentityAuditApiAuthenticator.AuthenticateAsync(
+        httpClient);
+
+    Console.WriteLine(
+        "Authentification réussie.");
 
     Console.WriteLine(
         $"Création d'un audit pour la cible {targetId}...");

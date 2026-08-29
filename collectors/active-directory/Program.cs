@@ -1,6 +1,7 @@
 ﻿using System.DirectoryServices.Protocols;
 using IdentityAudit.ActiveDirectoryCollector.Configuration;
 using IdentityAudit.ActiveDirectoryCollector.Services;
+using IdentityAudit.Collector.Common.Authentication;
 
 if (args.Length < 2 ||
     !Guid.TryParse(
@@ -345,6 +346,16 @@ try
             Timeout =
                 TimeSpan.FromSeconds(30)
         };
+
+    Console.WriteLine();
+    Console.WriteLine(
+        "Authentification du collecteur auprès de l'API...");
+
+    await IdentityAuditApiAuthenticator.AuthenticateAsync(
+        httpClient);
+
+    Console.WriteLine(
+        "Authentification réussie.");
 
     var apiClient =
         new IdentityAuditApiClient(

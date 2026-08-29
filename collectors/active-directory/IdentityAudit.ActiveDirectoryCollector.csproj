@@ -11,4 +11,8 @@
     <PackageReference Include="System.DirectoryServices.Protocols" Version="10.0.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\common\IdentityAudit.Collector.Common\IdentityAudit.Collector.Common.csproj" />
+  </ItemGroup>
+
 </Project>
