@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle2,
+  Download,
   FileSearch,
   KeyRound,
   LoaderCircle,
@@ -14,7 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getAuditById } from "../../api/auditsApi";
+import { exportAuditCsv, getAuditById } from "../../api/auditsApi";
 import {
   evaluateAuditRules,
   getAuditRuleEvaluations,
@@ -205,8 +206,10 @@ function AuditDetailsPage() {
   const [filter, setFilter] = useState<EvaluationFilter>("All");
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
   const [evaluationError, setEvaluationError] = useState("");
+  const [exportError, setExportError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -269,6 +272,39 @@ function AuditDetailsPage() {
     (total, evaluation) => total + evaluation.findingCount,
     0,
   );
+
+  async function handleExportCsv() {
+    if (!audit) {
+      return;
+    }
+
+    try {
+      setExporting(true);
+      setExportError("");
+
+      const result = await exportAuditCsv(audit.id);
+      const downloadUrl = URL.createObjectURL(result.content);
+      const link = document.createElement("a");
+
+      try {
+        link.href = downloadUrl;
+        link.download = result.fileName;
+
+        document.body.appendChild(link);
+        link.click();
+      } finally {
+        link.remove();
+
+        window.setTimeout(() => {
+          URL.revokeObjectURL(downloadUrl);
+        }, 1000);
+      }
+    } catch {
+      setExportError("Impossible d’exporter les résultats de l’audit.");
+    } finally {
+      setExporting(false);
+    }
+  }
 
   async function handleEvaluateRules() {
     if (!audit) {
@@ -368,22 +404,45 @@ function AuditDetailsPage() {
           </p>
         </div>
 
-        {audit.status === "Running" && activeTab === "results" && (
-          <button
-            className="evaluate-rules-button"
-            type="button"
-            disabled={evaluating}
-            onClick={() => void handleEvaluateRules()}
-          >
-            {evaluating ? (
-              <LoaderCircle className="audit-detail-spin" size={18} />
-            ) : (
-              <RefreshCw size={18} />
-            )}
+        {activeTab === "results" &&
+          (evaluations.length > 0 || audit.status === "Running") && (
+            <div className="audit-details-actions">
+              {evaluations.length > 0 && (
+                <button
+                  className="export-csv-button"
+                  type="button"
+                  disabled={exporting}
+                  aria-busy={exporting}
+                  onClick={() => void handleExportCsv()}
+                >
+                  {exporting ? (
+                    <LoaderCircle className="audit-detail-spin" size={18} />
+                  ) : (
+                    <Download size={18} />
+                  )}
 
-            {evaluating ? "Évaluation..." : "Évaluer les règles"}
-          </button>
-        )}
+                  {exporting ? "Exportation..." : "Exporter en CSV"}
+                </button>
+              )}
+
+              {audit.status === "Running" && (
+                <button
+                  className="evaluate-rules-button"
+                  type="button"
+                  disabled={evaluating}
+                  onClick={() => void handleEvaluateRules()}
+                >
+                  {evaluating ? (
+                    <LoaderCircle className="audit-detail-spin" size={18} />
+                  ) : (
+                    <RefreshCw size={18} />
+                  )}
+
+                  {evaluating ? "Évaluation..." : "Évaluer les règles"}
+                </button>
+              )}
+            </div>
+          )}
       </div>
 
       <section className="audit-overview">
@@ -514,10 +573,10 @@ function AuditDetailsPage() {
             </article>
           </div>
 
-          {evaluationError && (
+          {(evaluationError || exportError) && (
             <div className="evaluation-error">
               <XCircle size={18} />
-              {evaluationError}
+              {evaluationError || exportError}
             </div>
           )}
 

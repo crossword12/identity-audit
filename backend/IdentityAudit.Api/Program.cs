@@ -12,6 +12,7 @@ using IdentityAudit.Application.RuleEvaluations;
 using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Application.Authentication;
 using IdentityAudit.Application.ApplicationUsers;
+using IdentityAudit.Application.AuditExports;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
@@ -43,7 +44,9 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins("http://localhost:5174")
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .WithExposedHeaders(
+                "Content-Disposition");
     });
 });
 
@@ -87,6 +90,11 @@ builder.Services.AddIdentityAuditAuthorization();
 
 builder.Services.AddScoped<ITargetService, TargetService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+
+builder.Services.AddScoped<
+    IAuditExportService,
+    AuditExportService>();
+
 builder.Services.AddScoped<IIdentityService, IdentityService>();
 builder.Services.AddScoped<
     IDirectoryGroupService,

@@ -73,6 +73,37 @@
   color: var(--color-danger);
 }
 
+.audit-details-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.export-csv-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-primary);
+  border-radius: 8px;
+  background: var(--color-card);
+  color: var(--color-primary);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.export-csv-button:hover:not(:disabled) {
+  background: #eff6ff;
+}
+
+.export-csv-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
 .evaluate-rules-button {
   display: flex;
   align-items: center;
@@ -562,6 +593,16 @@
   .evidence-card dl div {
     grid-template-columns: 1fr;
     gap: 3px;
+  }
+
+  .audit-details-actions {
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .audit-details-actions button {
+    width: 100%;
   }
 }
 .audit-detail-tabs {

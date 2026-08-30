@@ -1,5 +1,6 @@
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Api.Authorization;
+using IdentityAudit.Application.AuditExports;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -19,6 +20,9 @@ public static class AuditEndpoints
 
         group.MapGet("/{id:guid}", GetByIdAsync)
             .WithName("GetAuditById");
+
+        group.MapGet("/{id:guid}/export.csv", ExportCsvAsync)
+            .WithName("ExportAuditCsv");
 
         group.MapPost("", CreateAsync)
             .WithName("CreateAudit")
@@ -129,5 +133,39 @@ public static class AuditEndpoints
         }
 
         return Results.Ok(result.Audit);
+    }
+
+    private static async Task<IResult> ExportCsvAsync(
+    Guid id,
+    IAuditExportService auditExportService,
+    HttpContext httpContext,
+    CancellationToken cancellationToken)
+    {
+        var result =
+            await auditExportService.ExportCsvAsync(
+                id,
+                cancellationToken);
+
+        if (!result.Succeeded ||
+            result.Content is null ||
+            string.IsNullOrWhiteSpace(result.FileName))
+        {
+            return Results.NotFound(new
+            {
+                message = result.ErrorMessage
+                    ?? "L'export demandé est introuvable."
+            });
+        }
+
+        httpContext.Response.Headers.CacheControl =
+            "no-store";
+
+        httpContext.Response.Headers.Pragma =
+            "no-cache";
+
+        return Results.File(
+            result.Content,
+            contentType: "text/csv; charset=utf-8",
+            fileDownloadName: result.FileName);
     }
 }
