@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   Users,
   XCircle,
+  ScrollText,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { exportAuditCsv, getAuditById } from "../../api/auditsApi";
@@ -29,9 +30,10 @@ import type {
   RuleEvaluationStatus,
   RuleSeverity,
 } from "../../types/ruleEvaluation";
+import AuditLogsPanel from "../../components/audit-details/AuditLogsPanel";
 import "./AuditDetailsPage.css";
 
-type DetailTab = "results" | "identities" | "groups" | "roles";
+type DetailTab = "results" | "identities" | "groups" | "roles" | "logs";
 type EvaluationFilter = "All" | RuleEvaluationStatus;
 type EvidenceRecord = Record<string, unknown>;
 
@@ -523,6 +525,17 @@ function AuditDetailsPage() {
           <KeyRound size={18} />
           Rôles
         </button>
+
+        <button
+          className={`audit-detail-tab ${activeTab === "logs" ? "active" : ""}`}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "logs"}
+          onClick={() => setActiveTab("logs")}
+        >
+          <ScrollText size={18} />
+          Journal
+        </button>
       </div>
 
       {activeTab === "results" && (
@@ -741,6 +754,8 @@ function AuditDetailsPage() {
       {activeTab === "groups" && <AuditGroupsPanel auditId={audit.id} />}
 
       {activeTab === "roles" && <AuditRolesPanel auditId={audit.id} />}
+
+      {activeTab === "logs" && <AuditLogsPanel auditId={audit.id} />}
     </div>
   );
 }
