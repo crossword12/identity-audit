@@ -1,5 +1,9 @@
 using IdentityAudit.Application.RuleEvaluations;
 using IdentityAudit.Api.Authorization;
+using System.Security.Claims;
+using IdentityAudit.Api.Authentication;
+using IdentityAudit.Application.AuditLogs;
+using IdentityAudit.Domain.Enums;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -45,6 +49,8 @@ public static class RuleEvaluationEndpoints
         EvaluateAuditRulesAsync(
             Guid auditId,
             IAuditRuleEvaluationService service,
+            ClaimsPrincipal principal,
+            IAuditLogService auditLogService,
             CancellationToken cancellationToken)
     {
         try
@@ -53,6 +59,13 @@ public static class RuleEvaluationEndpoints
                 await service.EvaluateAsync(
                     auditId,
                     cancellationToken);
+            await auditLogService.RecordAsync(
+                auditId,
+                principal.GetApplicationUserId(),
+                AuditLogLevel.Information,
+                AuditLogEventTypes.AuditRulesEvaluated,
+                $"Règles CIS évaluées pour l'audit {auditId}.",
+                cancellationToken);
 
             return Results.Ok(result);
         }

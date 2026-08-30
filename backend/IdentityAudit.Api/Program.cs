@@ -13,6 +13,7 @@ using IdentityAudit.Application.Dashboard;
 using IdentityAudit.Application.Authentication;
 using IdentityAudit.Application.ApplicationUsers;
 using IdentityAudit.Application.AuditExports;
+using IdentityAudit.Application.AuditLogs;
 using IdentityAudit.Infrastructure.Persistence;
 using IdentityAudit.Infrastructure.Persistence.Seeding;
 using IdentityAudit.Infrastructure.Services;
@@ -128,6 +129,10 @@ builder.Services.AddScoped<
 builder.Services.AddScoped<
     IApplicationUserService,
     ApplicationUserService>();
+
+builder.Services.AddScoped<
+    IAuditLogService,
+    AuditLogService>();
 
 var app = builder.Build();
 if (!app.Environment.IsEnvironment(

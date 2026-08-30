@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Encodings.Web;
 using IdentityAudit.Application.AuditExports;
 using IdentityAudit.Application.Authentication;
+using IdentityAudit.Application.AuditLogs;
+using IdentityAudit.Domain.Enums;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -186,6 +188,12 @@ public sealed class IdentityAuditApiFactory
                 IAuditExportService,
                 FakeAuditExportService>();
 
+            services.RemoveAll<IAuditLogService>();
+
+            services.AddSingleton<
+                IAuditLogService,
+                FakeAuditLogService>();
+
             services
                 .AddAuthentication(options =>
                 {
@@ -315,5 +323,62 @@ internal sealed class FakeAuditExportService
             .Concat(
                 Encoding.UTF8.GetBytes(csv))
             .ToArray();
+    }
+
+    internal sealed class FakeAuditLogService
+    : IAuditLogService
+    {
+        public Task RecordAsync(
+            Guid? auditId,
+            Guid? applicationUserId,
+            AuditLogLevel level,
+            string eventType,
+            string message,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
+
+        public Task<IReadOnlyList<AuditLogDto>?>
+            GetByAuditAsync(
+                Guid auditId,
+                CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<AuditLogDto>? result =
+                auditId ==
+                FakeAuditExportService.ExistingAuditId
+                    ? Array.Empty<AuditLogDto>()
+                    : null;
+
+            return Task.FromResult(result);
+        }
+    }
+}
+internal sealed class FakeAuditLogService
+    : IAuditLogService
+{
+    public Task RecordAsync(
+        Guid? auditId,
+        Guid? applicationUserId,
+        AuditLogLevel level,
+        string eventType,
+        string message,
+        CancellationToken cancellationToken = default)
+    {
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<AuditLogDto>?>
+        GetByAuditAsync(
+            Guid auditId,
+            CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<AuditLogDto>? result =
+            auditId ==
+            FakeAuditExportService.ExistingAuditId
+                ? Array.Empty<AuditLogDto>()
+                : null;
+
+        return Task.FromResult(result);
     }
 }

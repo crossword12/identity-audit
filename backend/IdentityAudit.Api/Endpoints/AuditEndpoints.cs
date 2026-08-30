@@ -1,6 +1,10 @@
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Api.Authorization;
 using IdentityAudit.Application.AuditExports;
+using IdentityAudit.Application.AuditLogs;
+using System.Security.Claims;
+using IdentityAudit.Api.Authentication;
+using IdentityAudit.Domain.Enums;
 
 namespace IdentityAudit.Api.Endpoints;
 
@@ -23,6 +27,13 @@ public static class AuditEndpoints
 
         group.MapGet("/{id:guid}/export.csv", ExportCsvAsync)
             .WithName("ExportAuditCsv");
+
+        group.MapGet("/{id:guid}/logs", GetLogsAsync)
+            .WithName("GetAuditLogs")
+            .Produces<IReadOnlyCollection<AuditLogDto>>(
+                StatusCodes.Status200OK)
+            .Produces(
+                StatusCodes.Status404NotFound);
 
         group.MapPost("", CreateAsync)
             .WithName("CreateAudit")
@@ -72,13 +83,41 @@ public static class AuditEndpoints
         return Results.Ok(audit);
     }
 
+    private static async Task<IResult> GetLogsAsync(
+    Guid id,
+    IAuditLogService auditLogService,
+    CancellationToken cancellationToken)
+    {
+        var auditLogs =
+            await auditLogService.GetByAuditAsync(
+                id,
+                cancellationToken);
+
+        if (auditLogs is null)
+        {
+            return Results.NotFound(new
+            {
+                message =
+                    "L'audit demandé est introuvable."
+            });
+        }
+
+        return Results.Ok(auditLogs);
+    }
+
     private static async Task<IResult> CreateAsync(
         CreateAuditRequest request,
         IAuditService auditService,
+        ClaimsPrincipal principal,
+        IAuditLogService auditLogService,
         CancellationToken cancellationToken)
     {
+        var applicationUserId =
+            principal.GetApplicationUserId();
+
         var result = await auditService.CreateAsync(
             request,
+            applicationUserId,
             cancellationToken);
 
         if (!result.IsSuccess || result.Audit is null)
@@ -89,6 +128,15 @@ public static class AuditEndpoints
             });
         }
 
+        await auditLogService.RecordAsync(
+            result.Audit.Id,
+            applicationUserId,
+            AuditLogLevel.Information,
+            AuditLogEventTypes.AuditCreated,
+            $"Audit {result.Audit.Id} créé pour la cible " +
+            $"« {result.Audit.TargetName} ».",
+            cancellationToken);
+
         return Results.CreatedAtRoute(
             "GetAuditById",
             new { id = result.Audit.Id },
@@ -98,6 +146,8 @@ public static class AuditEndpoints
     private static async Task<IResult> StartAsync(
         Guid id,
         IAuditService auditService,
+        ClaimsPrincipal principal,
+        IAuditLogService auditLogService,
         CancellationToken cancellationToken)
     {
         var result = await auditService.StartAsync(
@@ -112,12 +162,22 @@ public static class AuditEndpoints
             });
         }
 
+        await auditLogService.RecordAsync(
+            id,
+            principal.GetApplicationUserId(),
+            AuditLogLevel.Information,
+            AuditLogEventTypes.AuditStarted,
+            $"Audit {id} démarré.",
+            cancellationToken);
+
         return Results.Ok(result.Audit);
     }
 
     private static async Task<IResult> CompleteAsync(
         Guid id,
         IAuditService auditService,
+        ClaimsPrincipal principal,
+        IAuditLogService auditLogService,
         CancellationToken cancellationToken)
     {
         var result = await auditService.CompleteAsync(
@@ -132,6 +192,14 @@ public static class AuditEndpoints
             });
         }
 
+        await auditLogService.RecordAsync(
+            id,
+            principal.GetApplicationUserId(),
+            AuditLogLevel.Information,
+            AuditLogEventTypes.AuditCompleted,
+            $"Audit {id} terminé.",
+            cancellationToken);
+
         return Results.Ok(result.Audit);
     }
 
@@ -139,6 +207,8 @@ public static class AuditEndpoints
     Guid id,
     IAuditExportService auditExportService,
     HttpContext httpContext,
+    ClaimsPrincipal principal,
+    IAuditLogService auditLogService,
     CancellationToken cancellationToken)
     {
         var result =
@@ -156,6 +226,15 @@ public static class AuditEndpoints
                     ?? "L'export demandé est introuvable."
             });
         }
+
+        await auditLogService.RecordAsync(
+            id,
+            principal.GetApplicationUserId(),
+            AuditLogLevel.Information,
+            AuditLogEventTypes.AuditExported,
+            $"Résultats CIS de l'audit {id} " +
+            "exportés au format CSV.",
+            cancellationToken);
 
         httpContext.Response.Headers.CacheControl =
             "no-store";

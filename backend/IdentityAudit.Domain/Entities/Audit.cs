@@ -35,4 +35,7 @@ public sealed class Audit
 
     public ICollection<RuleEvaluation> RuleEvaluations { get; set; }
     = new List<RuleEvaluation>();
+
+    public ICollection<AuditLog> AuditLogs { get; set; }
+    = new List<AuditLog>();
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using IdentityAudit.Domain.Entities;
 
 namespace IdentityAudit.Infrastructure.Authentication;
 
@@ -13,4 +14,7 @@ public sealed class ApplicationUser : IdentityUser<Guid>
 
     public DateTimeOffset UpdatedAt { get; set; }
         = DateTimeOffset.UtcNow;
+
+    public ICollection<AuditLog> AuditLogs { get; set; }
+    = new List<AuditLog>();
 }

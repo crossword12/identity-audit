@@ -11,6 +11,7 @@ public interface IAuditService
 
     Task<CreateAuditResult> CreateAsync(
         CreateAuditRequest request,
+        Guid? createdByUserId,
         CancellationToken cancellationToken);
 
     Task<StartAuditResult> StartAsync(

@@ -56,6 +56,7 @@ public sealed class AuditService : IAuditService
 
     public async Task<CreateAuditResult> CreateAsync(
         CreateAuditRequest request,
+        Guid? createdByUserId,
         CancellationToken cancellationToken)
     {
         var target = await _dbContext.Targets
@@ -84,6 +85,7 @@ public sealed class AuditService : IAuditService
         var audit = new AuditEntity
         {
             TargetId = target.Id,
+            CreatedByUserId = createdByUserId,
             Status = AuditStatus.Pending,
             CreatedAt = DateTimeOffset.UtcNow
         };

@@ -18,6 +18,9 @@ using AuditRuleEntity =
 using RuleEvaluationEntity =
     IdentityAudit.Domain.Entities.RuleEvaluation;
 
+using AuditLogEntity =
+    IdentityAudit.Domain.Entities.AuditLog;
+
 namespace IdentityAudit.Infrastructure.Persistence;
 
 public sealed class IdentityAuditDbContext
@@ -57,6 +60,9 @@ public sealed class IdentityAuditDbContext
     public DbSet<RuleEvaluationEntity> RuleEvaluations =>
         Set<RuleEvaluationEntity>();
 
+    public DbSet<AuditLogEntity> AuditLogs =>
+    Set<AuditLogEntity>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -69,6 +75,7 @@ public sealed class IdentityAuditDbContext
         ConfigureGroupMembership(modelBuilder);
         ConfigureAuditRule(modelBuilder);
         ConfigureRuleEvaluation(modelBuilder);
+        ConfigureAuditLog(modelBuilder);
 
         modelBuilder.Entity<DirectoryRoleEntity>(entity =>
 {
@@ -470,6 +477,62 @@ public sealed class IdentityAuditDbContext
                 .HasForeignKey(evaluation =>
                     evaluation.AuditRuleId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+
+    private static void ConfigureAuditLog(
+    ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<AuditLogEntity>(entity =>
+        {
+            entity.ToTable("AuditLogs");
+
+            entity.HasKey(log => log.Id);
+
+            entity.Property(log => log.Level)
+                .HasConversion<string>()
+                .HasMaxLength(20)
+                .IsRequired();
+
+            entity.Property(log => log.EventType)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(log => log.Message)
+                .HasColumnType("text")
+                .IsRequired();
+
+            entity.Property(log => log.CreatedAt)
+                .IsRequired();
+
+            entity.HasIndex(log => new
+            {
+                log.AuditId,
+                log.CreatedAt
+            })
+                .IsDescending(false, true)
+                .HasDatabaseName(
+                    "IX_AuditLogs_AuditId_CreatedAt");
+
+            entity.HasIndex(log => new
+            {
+                log.ApplicationUserId,
+                log.CreatedAt
+            })
+                .IsDescending(false, true)
+                .HasDatabaseName(
+                    "IX_AuditLogs_ApplicationUserId_CreatedAt");
+
+            entity.HasOne(log => log.Audit)
+                .WithMany(audit => audit.AuditLogs)
+                .HasForeignKey(log => log.AuditId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            entity.HasOne<ApplicationUser>()
+                .WithMany(user => user.AuditLogs)
+                .HasForeignKey(log =>
+                    log.ApplicationUserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
     }
     private static void ConfigureApplicationIdentity(
