@@ -83,8 +83,12 @@ builder.Services
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddJwtAuthentication(
-    builder.Configuration);
+if (!builder.Environment.IsEnvironment(
+        "Testing"))
+{
+    builder.Services.AddJwtAuthentication(
+        builder.Configuration);
+}
 
 builder.Services.AddIdentityAuditAuthorization();
 
@@ -126,55 +130,57 @@ builder.Services.AddScoped<
     ApplicationUserService>();
 
 var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment(
+        "Testing"))
 {
-    var dbContext =
-        scope.ServiceProvider
-            .GetRequiredService<IdentityAuditDbContext>();
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext =
+            scope.ServiceProvider
+                .GetRequiredService<IdentityAuditDbContext>();
 
-    var insertedRuleCount =
-        await AuditRuleCatalogSeeder.SeedAsync(
-            dbContext);
+        var insertedRuleCount =
+            await AuditRuleCatalogSeeder.SeedAsync(
+                dbContext);
 
-    Console.WriteLine(
-        "Catalogue CIS initialisé : " +
-        $"{insertedRuleCount} nouvelle(s) règle(s) ajoutée(s).");
+        Console.WriteLine(
+            "Catalogue CIS initialisé : " +
+            $"{insertedRuleCount} nouvelle(s) règle(s) ajoutée(s).");
 
-    var roleManager =
-        scope.ServiceProvider
-            .GetRequiredService<
-                RoleManager<IdentityRole<Guid>>>();
+        var roleManager =
+            scope.ServiceProvider
+                .GetRequiredService<
+                    RoleManager<IdentityRole<Guid>>>();
 
-    var userManager =
-        scope.ServiceProvider
-            .GetRequiredService<
-                UserManager<ApplicationUser>>();
+        var userManager =
+            scope.ServiceProvider
+                .GetRequiredService<
+                    UserManager<ApplicationUser>>();
 
-    var identitySeedResult =
-        await ApplicationIdentitySeeder.SeedAsync(
-            roleManager,
-            userManager,
-            app.Configuration[
-                "Authentication:InitialAdmin:Email"],
-            app.Configuration[
-                "Authentication:InitialAdmin:DisplayName"],
-            app.Configuration[
-                "Authentication:InitialAdmin:Password"]);
+        var identitySeedResult =
+            await ApplicationIdentitySeeder.SeedAsync(
+                roleManager,
+                userManager,
+                app.Configuration[
+                    "Authentication:InitialAdmin:Email"],
+                app.Configuration[
+                    "Authentication:InitialAdmin:DisplayName"],
+                app.Configuration[
+                    "Authentication:InitialAdmin:Password"]);
 
-    Console.WriteLine(
-        "Rôles applicatifs initialisés : " +
-        $"{identitySeedResult.CreatedRoleCount} " +
-        "nouveau(x) rôle(s).");
+        Console.WriteLine(
+            "Rôles applicatifs initialisés : " +
+            $"{identitySeedResult.CreatedRoleCount} " +
+            "nouveau(x) rôle(s).");
 
-    Console.WriteLine(
-        identitySeedResult.AdministratorConfigured
-            ? identitySeedResult.AdministratorCreated
-                ? "Administrateur initial créé."
-                : "Administrateur initial déjà présent."
-            : "Aucun administrateur initial configuré.");
+        Console.WriteLine(
+            identitySeedResult.AdministratorConfigured
+                ? identitySeedResult.AdministratorCreated
+                    ? "Administrateur initial créé."
+                    : "Administrateur initial déjà présent."
+                : "Aucun administrateur initial configuré.");
+    }
 }
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -190,3 +196,6 @@ app.UseAuthorization();
 app.MapApiEndpoints();
 
 app.Run();
+public partial class Program
+{
+}

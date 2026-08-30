@@ -1,0 +1,319 @@
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Encodings.Web;
+using IdentityAudit.Application.AuditExports;
+using IdentityAudit.Application.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace IdentityAudit.Api.IntegrationTests;
+
+public sealed class AuditExportEndpointTests
+    : IClassFixture<IdentityAuditApiFactory>
+{
+    private readonly IdentityAuditApiFactory _factory;
+
+    public AuditExportEndpointTests(
+        IdentityAuditApiFactory factory)
+    {
+        _factory = factory;
+    }
+
+    [Fact]
+    public async Task ExportCsv_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        using var client = CreateClient();
+
+        var response = await client.GetAsync(
+            GetExportUrl(
+                FakeAuditExportService.ExistingAuditId));
+
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ExportCsv_WithAuditor_ReturnsDownloadableUtf8Csv()
+    {
+        using var client = CreateAuthenticatedClient();
+
+        var response = await client.GetAsync(
+            GetExportUrl(
+                FakeAuditExportService.ExistingAuditId));
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            response.StatusCode);
+
+        Assert.Equal(
+            "text/csv",
+            response.Content.Headers.ContentType?.MediaType);
+
+        Assert.Equal(
+            "utf-8",
+            response.Content.Headers.ContentType?.CharSet);
+
+        Assert.True(
+            response.Headers.CacheControl?.NoStore);
+
+        var expectedFileName =
+            $"audit-" +
+            $"{FakeAuditExportService.ExistingAuditId:N}" +
+            "-resultats-cis.csv";
+
+        var contentDisposition =
+            response.Content.Headers.ContentDisposition;
+
+        var receivedFileName =
+            contentDisposition?.FileNameStar
+            ?? contentDisposition?.FileName?.Trim('"');
+
+        Assert.Equal(
+            expectedFileName,
+            receivedFileName);
+
+        var content =
+            await response.Content.ReadAsByteArrayAsync();
+
+        Assert.True(content.Length >= 3);
+        Assert.Equal(0xEF, content[0]);
+        Assert.Equal(0xBB, content[1]);
+        Assert.Equal(0xBF, content[2]);
+
+        var csvText =
+            Encoding.UTF8.GetString(
+                content,
+                3,
+                content.Length - 3);
+
+        var lines =
+            csvText.Split(
+                new[] { "\r\n", "\n" },
+                StringSplitOptions.RemoveEmptyEntries);
+
+        Assert.Equal(2, lines.Length);
+        Assert.Contains(
+            "AD-05-01",
+            lines[1]);
+    }
+
+    [Fact]
+    public async Task ExportCsv_WithUnknownAudit_ReturnsNotFound()
+    {
+        using var client = CreateAuthenticatedClient();
+
+        var response = await client.GetAsync(
+            GetExportUrl(Guid.NewGuid()));
+
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            response.StatusCode);
+    }
+
+    private HttpClient CreateClient()
+    {
+        return _factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                BaseAddress =
+                    new Uri("https://localhost")
+            });
+    }
+
+    private HttpClient CreateAuthenticatedClient()
+    {
+        var client = CreateClient();
+
+        client.DefaultRequestHeaders.Add(
+            TestAuthenticationHandler.UserHeaderName,
+            "auditor");
+
+        return client;
+    }
+
+    private static string GetExportUrl(
+        Guid auditId)
+    {
+        return $"/api/audits/{auditId}/export.csv";
+    }
+}
+
+public sealed class IdentityAuditApiFactory
+    : WebApplicationFactory<Program>
+{
+    private const string TestConnectionString =
+    "Host=127.0.0.1;" +
+    "Port=1;" +
+    "Database=identity_audit_tests;" +
+    "Username=test;" +
+    "Password=test;" +
+    "Timeout=1";
+
+    public IdentityAuditApiFactory()
+    {
+        Environment.SetEnvironmentVariable(
+            "DOTNET_ENVIRONMENT",
+            "Testing");
+
+        Environment.SetEnvironmentVariable(
+            "ASPNETCORE_ENVIRONMENT",
+            "Testing");
+
+        Environment.SetEnvironmentVariable(
+            "ConnectionStrings__DefaultConnection",
+            TestConnectionString);
+    }
+    protected override void ConfigureWebHost(
+        IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Testing");
+
+
+
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<IAuditExportService>();
+
+            services.AddSingleton<
+                IAuditExportService,
+                FakeAuditExportService>();
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme =
+                        TestAuthenticationHandler.SchemeName;
+
+                    options.DefaultChallengeScheme =
+                        TestAuthenticationHandler.SchemeName;
+
+                    options.DefaultForbidScheme =
+                        TestAuthenticationHandler.SchemeName;
+                })
+                .AddScheme<
+                    AuthenticationSchemeOptions,
+                    TestAuthenticationHandler>(
+                    TestAuthenticationHandler.SchemeName,
+                    _ =>
+                    {
+                    });
+        });
+    }
+}
+
+internal sealed class TestAuthenticationHandler
+    : AuthenticationHandler<AuthenticationSchemeOptions>
+{
+    public const string SchemeName =
+        "IdentityAuditTest";
+
+    public const string UserHeaderName =
+        "X-IdentityAudit-Test-User";
+
+    public TestAuthenticationHandler(
+        IOptionsMonitor<AuthenticationSchemeOptions> options,
+        ILoggerFactory logger,
+        UrlEncoder encoder)
+        : base(
+            options,
+            logger,
+            encoder)
+    {
+    }
+
+    protected override Task<AuthenticateResult>
+        HandleAuthenticateAsync()
+    {
+        if (!Request.Headers.TryGetValue(
+                UserHeaderName,
+                out var userValue) ||
+            !string.Equals(
+                userValue.ToString(),
+                "auditor",
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return Task.FromResult(
+                AuthenticateResult.NoResult());
+        }
+
+        var claims = new[]
+        {
+            new Claim(
+                ClaimTypes.NameIdentifier,
+                "integration-test-auditor"),
+
+            new Claim(
+                ClaimTypes.Name,
+                "Auditeur de test"),
+
+            new Claim(
+                ClaimTypes.Role,
+                ApplicationRoles.Auditor)
+        };
+
+        var identity =
+            new ClaimsIdentity(
+                claims,
+                SchemeName);
+
+        var principal =
+            new ClaimsPrincipal(identity);
+
+        var ticket =
+            new AuthenticationTicket(
+                principal,
+                SchemeName);
+
+        return Task.FromResult(
+            AuthenticateResult.Success(ticket));
+    }
+}
+
+internal sealed class FakeAuditExportService
+    : IAuditExportService
+{
+    public static readonly Guid ExistingAuditId =
+        Guid.Parse(
+            "3c2fc841-a829-4636-9211-f66b5da6865e");
+
+    private static readonly byte[] CsvContent =
+        CreateCsvContent();
+
+    public Task<AuditCsvExportResult> ExportCsvAsync(
+        Guid auditId,
+        CancellationToken cancellationToken = default)
+    {
+        if (auditId != ExistingAuditId)
+        {
+            return Task.FromResult(
+                AuditCsvExportResult.Failure(
+                    "Audit introuvable."));
+        }
+
+        return Task.FromResult(
+            AuditCsvExportResult.Success(
+                CsvContent,
+                $"audit-{auditId:N}-resultats-cis.csv"));
+    }
+
+    private static byte[] CreateCsvContent()
+    {
+        var csv =
+            "\"IdentifiantAudit\";\"CodeRegle\"\r\n" +
+            $"\"{ExistingAuditId}\";\"AD-05-01\"\r\n";
+
+        return Encoding.UTF8
+            .GetPreamble()
+            .Concat(
+                Encoding.UTF8.GetBytes(csv))
+            .ToArray();
+    }
+}

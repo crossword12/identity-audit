@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.ActiveDirecto
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Collector.Common", "..\collectors\common\IdentityAudit.Collector.Common\IdentityAudit.Collector.Common.csproj", "{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IdentityAudit.Api.IntegrationTests", "..\tests\IdentityAudit.Api.IntegrationTests\IdentityAudit.Api.IntegrationTests.csproj", "{04E050AC-C912-4C50-B3F7-1F37015E5664}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +127,18 @@ Global
 		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x64.Build.0 = Release|Any CPU
 		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x86.ActiveCfg = Release|Any CPU
 		{B3F4133A-446C-41C9-83AA-6D4AA1C7357B}.Release|x86.Build.0 = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|x64.Build.0 = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Debug|x86.Build.0 = Debug|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|x64.ActiveCfg = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|x64.Build.0 = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|x86.ActiveCfg = Release|Any CPU
+		{04E050AC-C912-4C50-B3F7-1F37015E5664}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
