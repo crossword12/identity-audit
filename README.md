@@ -2,63 +2,103 @@
 
 Plateforme d’audit des identités et des privilèges alignée sur les **CIS Controls 5 et 6**.
 
-Identity Audit centralise les données provenant de **Microsoft Entra ID** et d’**Active Directory On-Premise**, puis analyse les comptes, groupes, rôles et privilèges afin de détecter les situations non conformes.
+Identity Audit collecte, centralise et analyse les comptes, groupes, rôles et privilèges provenant de Microsoft Entra ID et d’Active Directory On-Premise.
 
-## Fonctionnalités
+## État du projet
 
-L’application permet de :
+Les principales fonctionnalités sont opérationnelles :
 
-- gérer plusieurs cibles Microsoft Entra ID et Active Directory ;
-- créer et suivre des sessions d’audit ;
-- collecter les identités, groupes, rôles et appartenances ;
-- identifier les comptes actifs, désactivés, privilégiés et de service ;
-- appliquer des règles d’évaluation liées aux CIS Controls 5 et 6 ;
-- calculer un score de conformité ;
-- afficher les constats, preuves et recommandations ;
-- consulter l’historique des audits ;
-- visualiser les données dans une interface React.
+- API ASP.NET Core 10 ;
+- base PostgreSQL avec migrations Entity Framework Core ;
+- authentification JWT ;
+- rôles `Administrator`, `Auditor` et `Reader` ;
+- gestion des utilisateurs et des cibles ;
+- cycle complet des audits ;
+- collecte des identités, groupes, appartenances, rôles et affectations ;
+- collecteur Active Directory réel avec LDAPS ;
+- collecteur Microsoft Entra ID simulé ;
+- règles CIS Controls 5 et 6 ;
+- score de conformité ;
+- preuves et recommandations ;
+- export CSV compatible Excel ;
+- journal propre à chaque audit ;
+- journal d’activité global réservé aux administrateurs ;
+- interface React ;
+- tests d’intégration de l’API.
+
+## Limite actuelle
+
+Le collecteur Microsoft Entra ID fonctionne avec des réponses Microsoft Graph simulées, car aucun tenant Entra ID réel n’est actuellement disponible.
+
+Le collecteur Active Directory a été testé avec un domaine réel de laboratoire en **LDAPS sur le port `636`**.
 
 ## Architecture générale
 
-![Architecture générale](docs/diagrams/architecture-generale.png)
+```mermaid
+flowchart TB
+    USER[Administrateur / Auditeur / Lecteur]
+    UI[Frontend React]
+    API[API ASP.NET Core 10]
+    DB[(PostgreSQL)]
+    MOCK[Collecteur simulé]
+    ENTRA[Collecteur Entra ID simulé]
+    AD_COL[Collecteur AD sur Windows]
+    AD[(Active Directory)]
 
-```text
-Microsoft Entra ID                  Active Directory
-        │                                   │
-        ▼                                   ▼
-Collecteur Entra ID                 Collecteur AD
-        └──────────────┬────────────────────┘
-                       ▼
-                API ASP.NET Core
-                       │
-                       ▼
-                  PostgreSQL
-                       ▲
-                       │
-                 Frontend React
+    USER --> UI
+    UI -->|HTTP + JWT| API
+    MOCK -->|HTTP + JWT| API
+    ENTRA -->|HTTP + JWT| API
+    AD_COL -->|HTTP + JWT| API
+    API --> DB
+    AD_COL -->|LDAPS 636| AD
 ```
 
-L’application utilise une architecture en couches :
+Dans le laboratoire réel :
+
+```text
+Mac
+├── API ASP.NET Core : http://<IP-MAC>:5173
+├── PostgreSQL
+└── Frontend React : http://localhost:5174
+
+Windows
+├── Collecteur Active Directory
+├── connexion à l’API du Mac avec JWT
+└── connexion au contrôleur de domaine avec LDAPS 636
+```
+
+L’utilisation de HTTP entre Windows et le Mac est limitée au laboratoire isolé. Un déploiement réel devra utiliser HTTPS.
+
+## Architecture du backend
+
+Le backend est un monolithe organisé en couches :
 
 - `IdentityAudit.Domain` : entités et énumérations métier ;
-- `IdentityAudit.Application` : contrats, DTO et interfaces ;
+- `IdentityAudit.Application` : DTO, contrats et interfaces ;
 - `IdentityAudit.Infrastructure` : persistance et services ;
-- `IdentityAudit.Api` : endpoints HTTP ;
-- `collectors` : collecte et normalisation des données ;
-- `frontend` : interface utilisateur React.
+- `IdentityAudit.Api` : endpoints Minimal API et sécurité.
+
+Les collecteurs sont séparés du backend :
+
+- `collectors/common` : authentification commune auprès de l’API ;
+- `collectors/mock-collector` : données de démonstration ;
+- `collectors/entra-id` : collecte Microsoft Graph simulée ;
+- `collectors/active-directory` : collecte Active Directory réelle.
 
 ## Stack technique
 
-| Composant                       | Technologies             |
-| ------------------------------- | ------------------------ |
-| Backend                         | ASP.NET Core 10, C#      |
-| Accès aux données               | Entity Framework Core 10 |
-| Base de données                 | PostgreSQL               |
-| Frontend                        | React 19, TypeScript 6   |
-| Outil de développement frontend | Vite 8                   |
-| Communication                   | API REST, JSON           |
-| Interface                       | CSS, Lucide React        |
-| Versionnement                   | Git                      |
+| Composant        | Technologies                     |
+| ---------------- | -------------------------------- |
+| Backend          | ASP.NET Core 10, C#              |
+| API              | Minimal APIs, JSON, JWT          |
+| Persistance      | Entity Framework Core 10, Npgsql |
+| Base de données  | PostgreSQL                       |
+| Frontend         | React 19, TypeScript 6, Vite 8   |
+| Collecteurs      | .NET 10                          |
+| Active Directory | LDAPS `636`                      |
+| Tests            | xUnit, `WebApplicationFactory`   |
+| Versionnement    | Git                              |
 
 ## Structure du projet
 
@@ -71,238 +111,397 @@ identity-audit/
 │   ├── IdentityAudit.Infrastructure/
 │   └── IdentityAudit.sln
 ├── collectors/
+│   ├── common/
 │   ├── active-directory/
 │   ├── entra-id/
 │   └── mock-collector/
 ├── frontend/
-│   ├── src/
-│   ├── package.json
-│   └── README.md
+├── tests/
+│   └── IdentityAudit.Api.IntegrationTests/
 ├── database/
 ├── deployment/
 ├── docs/
-│   ├── diagrams/
-│   ├── 01-modele-donnees.md
-│   ├── 02-catalogue-regles.md
-│   ├── 03-schema-base-donnees.md
-│   └── 04-architecture-technique.md
-├── tests/
 └── README.md
 ```
 
 ## Modèle fonctionnel
 
-Chaque collecte est associée à un audit précis :
+Chaque audit constitue une photographie indépendante :
 
 ```text
 Cible
-  └── Audit
-       ├── Identités
-       ├── Groupes
-       │    └── Appartenances
-       ├── Rôles
-       │    └── Affectations
-       └── Évaluations des règles CIS
+└── Audit
+    ├── Identités
+    ├── Groupes
+    │   └── Appartenances
+    ├── Rôles
+    │   └── Affectations
+    ├── Évaluations CIS
+    └── Journal
 ```
 
-Cette organisation permet de conserver plusieurs photographies d’une même cible et de préserver l’historique des collectes.
+Cette organisation conserve l’historique sans écraser les collectes précédentes.
 
 ## Cycle d’un audit
 
-Un audit suit les étapes suivantes :
+Un collecteur réalise les opérations suivantes :
 
-1. création d’une cible ;
-2. création d’un audit au statut `Pending` ;
+1. authentification auprès de l’API ;
+2. création de l’audit au statut `Pending` ;
 3. démarrage de l’audit au statut `Running` ;
-4. exécution du collecteur correspondant ;
-5. import des identités, groupes, rôles et relations ;
-6. finalisation de l’audit ;
-7. évaluation des règles CIS ;
-8. calcul du score et affichage des résultats.
+4. import des identités ;
+5. import des groupes et appartenances ;
+6. import des rôles et affectations ;
+7. finalisation de l’audit au statut `Completed` ;
+8. évaluation des règles CIS ;
+9. calcul du score de conformité ;
+10. journalisation des opérations importantes.
+
+## Sécurité et rôles
+
+L’API utilise un jeton JWT transmis dans l’en-tête :
+
+```http
+Authorization: Bearer <JWT>
+```
+
+| Rôle            | Droits principaux                                  |
+| --------------- | -------------------------------------------------- |
+| `Reader`        | Consulter les audits et leurs résultats            |
+| `Auditor`       | Consulter et gérer les audits                      |
+| `Administrator` | Gérer les cibles, utilisateurs et journaux globaux |
+
+Les collecteurs utilisent le compte technique :
+
+```text
+collector@identityaudit.local
+```
+
+Ce compte possède uniquement le rôle `Auditor`.
+
+Les mots de passe, certificats privés et JWT ne doivent jamais être enregistrés dans Git.
 
 ## Prérequis
 
-Pour exécuter le projet localement :
+### Mac
 
 - .NET SDK 10 ;
 - PostgreSQL 14 ou supérieur ;
-- Node.js 24 recommandé ;
-- npm 11 ou supérieur ;
+- Node.js 24 ;
+- npm 11 ;
 - Git.
 
-Le collecteur Active Directory réel nécessite également :
+### Windows pour le collecteur AD
 
-- un environnement Windows ;
-- un domaine Active Directory accessible ;
-- une connexion LDAP ou LDAPS correctement configurée.
+- Windows x64 ;
+- accès réseau au contrôleur de domaine ;
+- résolution DNS du contrôleur ;
+- accès LDAPS sur le port `636` ;
+- certificat de l’autorité de certification du laboratoire ;
+- compte Active Directory limité à la lecture ;
+- accès réseau à l’API exécutée sur le Mac.
 
-## Installation de la base de données
+## Base PostgreSQL
 
-Créer la base PostgreSQL si elle n’existe pas encore :
+Créer la base si nécessaire :
 
 ```bash
 createdb identity_audit
 ```
 
-Configurer ensuite la chaîne de connexion PostgreSQL utilisée par l’API dans la configuration de développement locale.
-
-Ne pas enregistrer de mot de passe réel dans Git.
-
-Appliquer les migrations Entity Framework depuis la racine du projet :
+Configurer localement la chaîne de connexion de l’API, puis appliquer les migrations :
 
 ```bash
-ASPNETCORE_ENVIRONMENT=Development \
-dotnet tool run dotnet-ef database update \
+dotnet ef database update \
 --project backend/IdentityAudit.Infrastructure \
 --startup-project backend/IdentityAudit.Api
 ```
 
-## Lancement du backend
+Ne jamais enregistrer la chaîne de connexion contenant un mot de passe réel dans Git.
 
-Depuis la racine du projet :
+## Lancement de l’API
 
-```bash
-dotnet run --project backend/IdentityAudit.Api
-```
-
-L’API est disponible à l’adresse :
-
-```text
-http://localhost:5173
-```
-
-Vérification de son état :
+Pour une utilisation uniquement sur le Mac :
 
 ```bash
-curl http://localhost:5173/api/health
+dotnet run \
+--project backend/IdentityAudit.Api
+```
+
+Pour permettre au collecteur Windows de joindre l’API :
+
+```bash
+dotnet run \
+--project backend/IdentityAudit.Api \
+-- \
+--urls http://0.0.0.0:5173
+```
+
+Vérification :
+
+```bash
+curl -sS \
+http://localhost:5173/api/health
+```
+
+Résultat attendu :
+
+```json
+{
+  "status": "Healthy",
+  "service": "IdentityAudit.Api"
+}
 ```
 
 ## Lancement du frontend
 
-Depuis le dossier `frontend` :
-
 ```bash
-cp .env.example .env
-npm install
-npm run dev
+cp frontend/.env.example frontend/.env
+npm --prefix frontend install
+npm --prefix frontend run dev
 ```
 
-L’interface est disponible à l’adresse :
-
-```text
-http://localhost:5174
-```
-
-La variable utilisée par le frontend est :
+Configuration locale :
 
 ```env
 VITE_API_BASE_URL=http://localhost:5173
 ```
 
-## Collecteurs
+L’interface est accessible sur :
 
-### Collecteur Microsoft Entra ID
+```text
+http://localhost:5174
+```
+
+## Authentification des collecteurs
+
+Avant d’exécuter un collecteur sur macOS :
+
+```bash
+export \
+IDENTITY_AUDIT_API_EMAIL="collector@identityaudit.local"
+```
+
+```bash
+read -s \
+"IDENTITY_AUDIT_API_PASSWORD?Mot de passe du collecteur : "
+echo
+export IDENTITY_AUDIT_API_PASSWORD
+```
+
+Après le test :
+
+```bash
+unset \
+IDENTITY_AUDIT_API_EMAIL \
+IDENTITY_AUDIT_API_PASSWORD
+```
+
+## Collecteur de démonstration
 
 ```bash
 dotnet run \
---project collectors/entra-id/IdentityAudit.EntraCollector.csproj
+--project collectors/mock-collector \
+-- \
+<TARGET_ID> \
+http://localhost:5173
 ```
 
-Le mode actuellement utilisé pour la démonstration repose sur des données Microsoft Graph simulées et normalisées avant leur envoi à l’API.
+Il permet de tester le cycle d’un audit sans annuaire externe.
 
-### Collecteur Active Directory
+## Collecteur Microsoft Entra ID
 
 ```bash
 dotnet run \
---project collectors/active-directory/IdentityAudit.ActiveDirectoryCollector.csproj
+--project collectors/entra-id/IdentityAudit.EntraCollector.csproj \
+-- \
+<TARGET_ID> \
+http://localhost:5173
 ```
 
-Ce collecteur est destiné à être exécuté depuis l’environnement Windows disposant de l’accès au domaine Active Directory.
+Ce collecteur utilise actuellement des fichiers JSON simulant la pagination et les réponses Microsoft Graph.
 
-### Collecteur de démonstration
+Il collecte et normalise :
+
+- utilisateurs ;
+- groupes ;
+- appartenances ;
+- définitions de rôles ;
+- affectations de rôles.
+
+## Collecteur Active Directory
+
+Le collecteur est publié sur le Mac pour Windows x64 :
 
 ```bash
-dotnet run \
---project collectors/mock-collector/IdentityAudit.MockCollector.csproj
+dotnet publish \
+collectors/active-directory/IdentityAudit.ActiveDirectoryCollector.csproj \
+-c Release \
+-r win-x64 \
+--self-contained true \
+-o /tmp/identityaudit-ad-win-x64-latest
 ```
 
-Il permet de valider le cycle d’import sans dépendre d’un annuaire externe.
+Configuration requise sur Windows :
+
+```powershell
+$env:AD_HOST = "LAB-DC01.identityaudit.test"
+$env:AD_PORT = "636"
+$env:AD_USE_SSL = "true"
+$env:AD_BASE_DN = "DC=identityaudit,DC=test"
+$env:AD_BIND_USERNAME = "collecteur@identityaudit.test"
+$env:AD_TIMEOUT_SECONDS = "15"
+$env:AD_TRUSTED_CA_CERTIFICATE = "C:\IdentityAudit\certs\IdentityAudit-Lab-RootCA.cer"
+$env:IDENTITY_AUDIT_API_EMAIL = "collector@identityaudit.local"
+```
+
+Les variables sensibles suivantes doivent être demandées de manière interactive :
+
+```text
+AD_BIND_PASSWORD
+IDENTITY_AUDIT_API_PASSWORD
+```
+
+Exécution :
+
+```powershell
+.\IdentityAudit.ActiveDirectoryCollector.exe `
+"<TARGET_ID>" `
+"http://<IP-MAC>:5173"
+```
+
+Le mot de passe Active Directory, le mot de passe API et le JWT ne sont jamais journalisés.
+
+## Fonctionnalités du frontend
+
+L’interface contient :
+
+- tableau de bord ;
+- gestion des cibles ;
+- historique et gestion des audits ;
+- détail des résultats CIS ;
+- identités ;
+- groupes et appartenances ;
+- rôles et affectations ;
+- export CSV ;
+- journal propre à chaque audit ;
+- gestion des utilisateurs ;
+- journal d’activité global administrateur.
+
+Routes principales :
+
+| Route              | Accès                                              |
+| ------------------ | -------------------------------------------------- |
+| `/login`           | Public                                             |
+| `/`                | Utilisateur authentifié                            |
+| `/targets`         | Utilisateur authentifié, actions limitées par rôle |
+| `/audits`          | Utilisateur authentifié                            |
+| `/audits/:auditId` | Utilisateur authentifié                            |
+| `/users`           | `Administrator`                                    |
+| `/activity-logs`   | `Administrator`                                    |
 
 ## Endpoints principaux
 
-| Méthode | Endpoint                            | Fonction                  |
-| ------- | ----------------------------------- | ------------------------- |
-| `GET`   | `/api/health`                       | Vérifier l’état de l’API  |
-| `GET`   | `/api/targets`                      | Lister les cibles         |
-| `POST`  | `/api/targets`                      | Créer une cible           |
-| `PUT`   | `/api/targets/{id}`                 | Modifier une cible        |
-| `POST`  | `/api/targets/{id}/test-connection` | Tester la connexion       |
-| `GET`   | `/api/audits`                       | Lister les audits         |
-| `POST`  | `/api/audits`                       | Créer un audit            |
-| `POST`  | `/api/audits/{id}/start`            | Démarrer un audit         |
-| `POST`  | `/api/audits/{id}/complete`         | Terminer un audit         |
-| `GET`   | `/api/audits/{id}/identities`       | Consulter les identités   |
-| `GET`   | `/api/audits/{id}/groups`           | Consulter les groupes     |
-| `GET`   | `/api/audits/{id}/roles`            | Consulter les rôles       |
-| `GET`   | `/api/audits/{id}/rule-evaluations` | Consulter les évaluations |
-| `POST`  | `/api/audits/{id}/evaluate`         | Évaluer les règles CIS    |
+| Endpoint                            | Description                      |
+| ----------------------------------- | -------------------------------- |
+| `POST /api/auth/login`              | Obtenir un JWT                   |
+| `GET /api/auth/me`                  | Consulter l’utilisateur connecté |
+| `/api/targets`                      | Gestion des cibles               |
+| `/api/audits`                       | Gestion des audits               |
+| `/api/audits/{id}/identities`       | Identités d’un audit             |
+| `/api/audits/{id}/groups`           | Groupes d’un audit               |
+| `/api/audits/{id}/roles`            | Rôles d’un audit                 |
+| `/api/audits/{id}/rule-evaluations` | Résultats CIS                    |
+| `GET /api/audits/{id}/export.csv`   | Export CSV                       |
+| `GET /api/audits/{id}/logs`         | Journal d’un audit               |
+| `GET /api/audit-logs?limit=200`     | Journal global administrateur    |
+| `/api/application-users`            | Gestion des utilisateurs         |
+| `GET /api/health`                   | État de l’API                    |
 
-## Interface utilisateur
+## Export CSV
 
-Le frontend contient quatre vues principales :
+Les résultats CIS peuvent être téléchargés depuis le détail d’un audit.
 
-- **Tableau de bord** : KPI, score CIS, gravité des constats et audits récents ;
-- **Cibles** : création, modification et test de connexion ;
-- **Audits** : création, filtrage, démarrage et finalisation ;
-- **Détail d’un audit** : résultats CIS, identités, groupes et rôles.
+L’export :
 
-Le Dashboard utilise le dernier audit terminé pour ses indicateurs tout en conservant les audits en attente ou en cours dans l’historique.
+- nécessite un JWT ;
+- utilise UTF-8 avec BOM ;
+- utilise le séparateur `;` ;
+- contient les règles, statuts, constats, preuves et recommandations ;
+- est compatible avec Microsoft Excel.
+
+## Journalisation
+
+Deux vues sont disponibles :
+
+```text
+Détail d’un audit
+└── Journal
+    → événements de cet audit
+
+Administration
+└── Journal d’activité
+    → événements de tous les audits
+```
+
+Le journal global est limité aux administrateurs.
+
+Les événements actuellement enregistrés comprennent :
+
+- création d’un audit ;
+- démarrage d’un audit ;
+- finalisation d’un audit ;
+- évaluation des règles ;
+- export CSV.
 
 ## Vérification du projet
 
-Compiler l’ensemble du backend et des collecteurs :
+Compiler le backend et les collecteurs :
 
 ```bash
 dotnet build backend/IdentityAudit.sln
 ```
 
+Exécuter les tests d’intégration :
+
+```bash
+dotnet test \
+tests/IdentityAudit.Api.IntegrationTests/IdentityAudit.Api.IntegrationTests.csproj
+```
+
+Résultat validé :
+
+```text
+9 tests réussis
+0 test échoué
+```
+
 Compiler le frontend :
 
 ```bash
-cd frontend
-npm run build
+npm --prefix frontend run build
 ```
 
-Vérifier le code frontend :
+Vérifier les différences Git :
 
 ```bash
-npm run lint
+git diff --check
+git status --short
 ```
 
 ## Documentation
 
-La documentation technique est disponible dans `docs/` :
+Les documents techniques se trouvent dans `docs/` :
 
-- modèle des données collectées ;
-- catalogue des règles CIS ;
-- schéma de la base PostgreSQL ;
-- architecture technique ;
-- diagramme de classes ;
-- schéma relationnel ;
-- architecture générale.
+- `01-modele-donnees.md` ;
+- `02-catalogue-regles.md` ;
+- `03-schema-base-donnees.md` ;
+- `04-architecture-technique.md`.
 
-## État actuel
+## Évolutions possibles
 
-Les fonctionnalités principales sont opérationnelles :
-
-- API et base PostgreSQL ;
-- collecteurs Entra ID, Active Directory et simulé ;
-- gestion des cibles ;
-- gestion du cycle des audits ;
-- collecte des identités, groupes et rôles ;
-- évaluation CIS Controls 5 et 6 ;
-- calcul du score de conformité ;
-- affichage des preuves et recommandations ;
-- interface React complète et responsive.
-
-Le test de connexion depuis la page Cibles est actuellement simulé. Une connexion réelle à Microsoft Graph ou à LDAPS pourra être intégrée comme évolution.
+- connexion à un tenant Microsoft Entra ID réel ;
+- utilisation de HTTPS entre tous les composants ;
+- ajout d’événements administratifs supplémentaires au journal global ;
+- pagination serveur du journal d’activité ;
+- automatisation du déploiement.

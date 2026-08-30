@@ -2,90 +2,135 @@
 
 ## 1. Objectif
 
-L’application Identity Audit doit collecter, centraliser, analyser et présenter les informations liées aux identités et aux privilèges provenant de :
+Identity Audit collecte, centralise et analyse les identités et privilèges provenant de :
 
 - Microsoft Entra ID ;
 - Active Directory On-Premise.
 
-L’architecture est organisée en composants séparés afin de faciliter le développement, les tests, la maintenance et l’ajout futur de nouveaux collecteurs.
+L’application applique des règles liées aux CIS Controls 5 et 6 afin de produire :
 
-Le projet vise notamment à :
+- un score de conformité ;
+- des constats ;
+- des preuves ;
+- des recommandations ;
+- un historique des opérations.
 
-- gérer les cibles à auditer ;
-- déclencher et suivre les audits ;
-- collecter les identités et les privilèges ;
-- appliquer progressivement les règles liées aux CIS Controls 5 et 6 ;
-- afficher les anomalies et les recommandations ;
-- calculer un score de conformité ;
-- conserver l’historique des audits.
-
-## 2. Architecture générale
+## 2. Architecture réellement mise en œuvre
 
 ```mermaid
-flowchart LR
+flowchart TB
     USER[Administrateur / Auditeur / Lecteur]
+    UI[Frontend React]
+    API[API ASP.NET Core 10]
+    DB[(PostgreSQL)]
+    MAC_COL[Collecteurs simulé et Entra]
+    WIN_COL[Collecteur AD sur Windows]
+    AD[(Active Directory)]
 
-    FRONTEND[Frontend React<br/>TypeScript]
-
-    BACKEND[Backend ASP.NET Core 10<br/>Minimal APIs, services et moteur d'audit]
-
-    DATABASE[(PostgreSQL)]
-
-    MOCK[Collecteur simulé<br/>C#]
-
-    ENTRA[Collecteur Entra ID<br/>Microsoft Graph]
-
-    AD[Collecteur Active Directory<br/>LDAP / LDAPS]
-
-    ENTRA_TARGET[Microsoft Entra ID]
-
-    AD_TARGET[Active Directory<br/>On-Premise]
-
-    USER -->|HTTPS| FRONTEND
-    FRONTEND -->|REST / JSON| BACKEND
-    BACKEND -->|Entity Framework Core / SQL| DATABASE
-
-    MOCK -->|REST / JSON| BACKEND
-    ENTRA -->|REST / JSON| BACKEND
-    AD -->|REST / JSON| BACKEND
-
-    ENTRA_TARGET -->|Lecture seule| ENTRA
-    AD_TARGET -->|Lecture seule| AD
+    USER --> UI
+    UI -->|REST JSON et JWT| API
+    MAC_COL -->|REST JSON et JWT| API
+    WIN_COL -->|REST JSON et JWT| API
+    API -->|EF Core et SQL| DB
+    WIN_COL -->|LDAPS 636| AD
 ```
 
-L’application adopte une architecture monolithique en couches, inspirée des principes de la Clean Architecture.
+Le projet utilise une architecture monolithique en couches pour le backend et des exécutables séparés pour les collecteurs.
 
-Les collecteurs récupèrent les données depuis les annuaires, puis les transmettent au backend. Le backend valide, normalise et enregistre ces données dans PostgreSQL. Le frontend communiquera uniquement avec le backend.
+## 3. Répartition entre les machines
 
-## 3. Composants
+### 3.1 Mac
 
-### 3.1 Frontend React
+Le Mac héberge principalement :
 
-Le frontend constitue l’interface destinée aux administrateurs, aux auditeurs et aux lecteurs.
+- le code source ;
+- l’API ASP.NET Core ;
+- PostgreSQL ;
+- le frontend React ;
+- le collecteur simulé ;
+- le collecteur Entra ID simulé ;
+- les tests ;
+- Git et la documentation.
 
-Responsabilités prévues :
+Pour permettre au collecteur Windows de joindre l’API :
 
-- authentification des utilisateurs ;
-- affichage du tableau de bord ;
+```bash
+dotnet run \
+--project backend/IdentityAudit.Api \
+-- \
+--urls http://0.0.0.0:5173
+```
+
+L’API est alors accessible depuis Windows avec l’adresse du Mac :
+
+```text
+http://<IP-MAC>:5173
+```
+
+### 3.2 Windows
+
+Windows héberge :
+
+- le collecteur Active Directory publié en `win-x64` ;
+- le certificat public de l’autorité de certification du laboratoire ;
+- les variables de configuration LDAP et API.
+
+Le collecteur communique avec :
+
+```text
+API sur le Mac
+└── HTTP + JWT
+
+Contrôleur de domaine
+└── LDAPS 636
+```
+
+### 3.3 Contrôleur de domaine
+
+Le contrôleur de domaine utilisé dans le laboratoire est :
+
+```text
+LAB-DC01.identityaudit.test:636
+```
+
+La connexion utilise LDAPS avec validation du certificat serveur.
+
+LDAP simple sur le port `389` n’est pas utilisé dans le laboratoire, car Active Directory exige une authentification forte. La configuration du domaine n’a pas été affaiblie.
+
+## 4. Frontend React
+
+Le frontend constitue l’interface des administrateurs, auditeurs et lecteurs.
+
+Il est développé avec :
+
+- React 19 ;
+- TypeScript 6 ;
+- Vite 8 ;
+- React Router DOM ;
+- Axios ;
+- Lucide React ;
+- CSS.
+
+Fonctionnalités principales :
+
+- authentification ;
+- tableau de bord ;
 - gestion des cibles ;
-- lancement et suivi des audits ;
-- affichage des identités collectées ;
-- consultation des anomalies ;
-- affichage des recommandations ;
-- filtres et recherches ;
-- export des résultats.
+- création et suivi des audits ;
+- consultation des identités ;
+- consultation des groupes et appartenances ;
+- consultation des rôles et affectations ;
+- résultats CIS ;
+- export CSV ;
+- journal d’un audit ;
+- gestion des utilisateurs ;
+- journal d’activité global.
 
-Le frontend ne communique pas directement avec PostgreSQL, Microsoft Entra ID ou Active Directory.
+Le frontend communique uniquement avec l’API. Il ne se connecte jamais directement à PostgreSQL ou aux annuaires.
 
-Il communique uniquement avec le backend au moyen de requêtes REST au format JSON.
+## 5. Backend ASP.NET Core 10
 
-### 3.2 Backend ASP.NET Core 10
-
-Le backend constitue le composant central de l’application.
-
-Il est développé avec ASP.NET Core 10 sous la forme d’une application monolithique organisée en couches.
-
-Les responsabilités sont réparties entre quatre projets :
+Le backend est organisé en quatre couches :
 
 ```text
 IdentityAudit.Api
@@ -94,105 +139,144 @@ IdentityAudit.Domain
 IdentityAudit.Infrastructure
 ```
 
-Le projet `IdentityAudit.Api` expose les routes HTTP au moyen des Minimal APIs d’ASP.NET Core.
+### 5.1 IdentityAudit.Domain
 
-Les endpoints sont regroupés par domaine fonctionnel :
+Cette couche contient :
+
+- les entités ;
+- les énumérations ;
+- les états métier ;
+- les relations principales du domaine.
+
+Elle ne dépend pas des autres projets du backend.
+
+### 5.2 IdentityAudit.Application
+
+Cette couche contient :
+
+- les DTO ;
+- les requêtes ;
+- les résultats de services ;
+- les interfaces de services ;
+- les rôles applicatifs ;
+- les contrats d’export et de journalisation.
+
+### 5.3 IdentityAudit.Infrastructure
+
+Cette couche contient :
+
+- `IdentityAuditDbContext` ;
+- les configurations Entity Framework Core ;
+- les migrations ;
+- les services métier ;
+- les requêtes PostgreSQL ;
+- ASP.NET Core Identity ;
+- la génération des JWT ;
+- le moteur d’évaluation CIS ;
+- l’export CSV ;
+- la journalisation.
+
+### 5.4 IdentityAudit.Api
+
+Cette couche expose les Minimal APIs.
+
+Les endpoints sont regroupés par domaine :
 
 ```text
 HealthEndpoints
+AuthenticationEndpoints
+ApplicationUserEndpoints
 TargetEndpoints
 AuditEndpoints
 IdentityEndpoints
+DirectoryGroupEndpoints
+GroupMembershipEndpoints
+DirectoryRoleEndpoints
+RoleAssignmentEndpoints
+RuleEvaluationEndpoints
 DashboardEndpoints
+AuditLogEndpoints
 ```
 
-Tous les groupes d’endpoints sont enregistrés dans l’application à travers la méthode :
+Ils sont enregistrés avec :
 
 ```csharp
 app.MapApiEndpoints();
 ```
 
-Le flux général d’une requête est le suivant :
+Le flux habituel d’une requête est :
 
 ```text
 Requête HTTP
+     ↓
+Authentification et autorisation
      ↓
 Minimal API
      ↓
 Interface de service
      ↓
-Implémentation du service
+Implémentation Infrastructure
      ↓
-Entity Framework Core ou requête SQL
+Entity Framework Core ou SQL
      ↓
 PostgreSQL
 ```
 
-Exemple pour le tableau de bord :
+Le projet n’utilise pas MediatR. Les endpoints reçoivent directement leurs services grâce à l’injection de dépendances.
 
-```text
-DashboardEndpoints
-        ↓
-IDashboardService
-        ↓
-DashboardService
-        ↓
-Fonction PostgreSQL
+## 6. Authentification et autorisation
+
+L’API utilise ASP.NET Core Identity pour les utilisateurs et les rôles.
+
+Après une connexion réussie, elle délivre un JWT.
+
+```http
+Authorization: Bearer <JWT>
 ```
 
-Le projet n’utilise pas MediatR.
+Rôles :
 
-Les endpoints appellent directement les interfaces de services grâce à l’injection de dépendances d’ASP.NET Core.
+| Rôle            | Responsabilité                                       |
+| --------------- | ---------------------------------------------------- |
+| `Reader`        | Consultation                                         |
+| `Auditor`       | Consultation et gestion des audits                   |
+| `Administrator` | Gestion des cibles, utilisateurs et journaux globaux |
 
-Cette décision permet de conserver une architecture simple, lisible et adaptée à la taille actuelle du projet.
+Politiques principales :
 
-Responsabilités principales du backend :
+```text
+CanReadAuditData
+CanManageAudits
+CanManageTargets
+CanManageUsers
+CanReadActivityLogs
+```
 
-- exposer l’API REST ;
-- valider les requêtes reçues ;
-- gérer les cibles ;
-- créer et suivre les audits ;
-- recevoir les données des collecteurs ;
-- normaliser les données reçues ;
-- enregistrer les données dans PostgreSQL ;
-- fournir les données du tableau de bord ;
-- exécuter progressivement les règles CIS ;
-- générer les anomalies et les recommandations ;
-- calculer les scores de conformité ;
-- conserver l’historique des audits ;
-- préparer les futurs exports.
+Les protections sont appliquées dans l’API. Les restrictions du frontend améliorent l’expérience utilisateur, mais ne remplacent pas les contrôles backend.
 
-La validation des modèles est activée pour les Minimal APIs. Une requête invalide reçoit une réponse HTTP `400 Bad Request`.
+Le compte technique des collecteurs possède uniquement le rôle `Auditor`.
 
-Le backend expose également un document OpenAPI dans l’environnement de développement.
+## 7. PostgreSQL
 
-Le moteur d’audit CIS restera dans le backend. Les règles métier et les règles de conformité ne seront pas placées dans PostgreSQL.
+PostgreSQL stocke :
 
-### 3.3 PostgreSQL
-
-PostgreSQL assure le stockage persistant des informations collectées et des résultats des audits.
-
-Il contient ou contiendra notamment :
-
-- les utilisateurs de l’application ;
+- les utilisateurs et rôles applicatifs ;
 - les cibles ;
 - les audits ;
 - les identités ;
 - les groupes ;
-- les appartenances aux groupes ;
-- les rôles ;
-- les attributions de rôles ;
-- le catalogue des règles CIS ;
-- les résultats des évaluations ;
-- les anomalies ;
+- les appartenances ;
+- les rôles d’annuaire ;
+- les affectations ;
+- le catalogue CIS ;
+- les évaluations ;
+- les preuves ;
 - les recommandations ;
-- les journaux d’audit.
+- les journaux d’activité.
 
-PostgreSQL ne se connecte jamais directement à Microsoft Entra ID ou à Active Directory.
+L’accès utilise Entity Framework Core et Npgsql.
 
-Les accès à la base sont réalisés principalement avec Entity Framework Core et le fournisseur Npgsql.
-
-La base contient également des objets destinés à préparer et à optimiser le futur tableau de bord :
+Certains besoins de lecture du tableau de bord sont optimisés avec PostgreSQL :
 
 ```text
 IX_Audits_TargetId_CreatedAt
@@ -200,195 +284,143 @@ vw_AuditDashboardSummary
 fn_GetTargetDashboard(uuid)
 ```
 
-L’index composite `IX_Audits_TargetId_CreatedAt` permet d’optimiser les recherches d’audits d’une cible, classés du plus récent au plus ancien.
+Les règles CIS sont exécutées dans le backend. PostgreSQL assure le stockage et certaines agrégations, mais ne contient pas le moteur métier.
 
-La vue `vw_AuditDashboardSummary` centralise les principales statistiques de chaque audit.
+## 8. Collecteur commun
 
-Elle calcule notamment :
-
-- le nombre total d’identités ;
-- le nombre de comptes actifs ;
-- le nombre de comptes désactivés ;
-- le nombre de comptes privilégiés ;
-- le nombre de comptes de service ;
-- le nombre de comptes invités ;
-- le nombre de comptes verrouillés.
-
-La fonction `fn_GetTargetDashboard(uuid)` permet de récupérer les statistiques correspondant à une cible déterminée.
-
-PostgreSQL participe ainsi à l’optimisation des lectures et des agrégations nécessaires au tableau de bord.
-
-Les règles métier et les règles CIS restent toutefois exécutées dans le backend.
-
-### 3.4 Collecteur simulé
-
-Le collecteur simulé a été développé en C# afin de tester toute la chaîne fonctionnelle sans dépendre immédiatement d’un environnement Microsoft Entra ID ou Active Directory réel.
-
-Responsabilités :
-
-1. lire des identités fictives ;
-2. créer un nouvel audit ;
-3. démarrer l’audit ;
-4. envoyer les identités au backend ;
-5. terminer l’audit ;
-6. vérifier que les données sont enregistrées dans PostgreSQL ;
-7. mettre à jour la date de la dernière collecte de la cible.
-
-Le collecteur simulé a permis de valider le cycle suivant :
+Le projet :
 
 ```text
-Pending
-   ↓
-Running
-   ↓
-Import des identités
-   ↓
-Completed
+collectors/common/IdentityAudit.Collector.Common
 ```
 
-### 3.5 Collecteur Microsoft Entra ID
+centralise l’authentification des collecteurs auprès de l’API.
 
-Le collecteur Entra ID utilisera Microsoft Graph.
-
-Responsabilités prévues :
-
-- s’authentifier auprès de Microsoft Entra ID ;
-- récupérer les utilisateurs ;
-- récupérer les invités ;
-- récupérer les groupes ;
-- récupérer les membres des groupes ;
-- récupérer les rôles d’annuaire ;
-- récupérer les attributions de rôles ;
-- récupérer les informations d’activité accessibles ;
-- récupérer les informations MFA accessibles ;
-- convertir les résultats vers le modèle commun ;
-- transmettre les données au backend.
-
-Les permissions accordées devront être limitées aux droits de lecture strictement nécessaires.
-
-### 3.6 Collecteur Active Directory
-
-Le collecteur Active Directory sera exécuté sur Windows ou sur une machine pouvant joindre le domaine.
-
-Il utilisera LDAP ou LDAPS.
-
-Responsabilités prévues :
-
-- tester la connexion au domaine ;
-- récupérer les utilisateurs ;
-- récupérer les groupes ;
-- récupérer les appartenances aux groupes ;
-- détecter les comptes désactivés ;
-- détecter les comptes verrouillés ;
-- récupérer la dernière connexion disponible ;
-- identifier les groupes privilégiés ;
-- identifier les comptes de service ;
-- convertir les données vers le modèle commun ;
-- transmettre les résultats au backend.
-
-Le compte utilisé par le collecteur disposera uniquement de permissions de lecture.
-
-## 4. Répartition entre le Mac et Windows
-
-### 4.1 Mac M2
-
-Le Mac est utilisé principalement pour développer :
-
-- le backend ASP.NET Core ;
-- la base PostgreSQL ;
-- le frontend React ;
-- le collecteur simulé ;
-- le collecteur Entra ID ;
-- le moteur de règles CIS ;
-- les tests ;
-- la documentation ;
-- la gestion Git.
-
-### 4.2 PC Windows
-
-Le PC Windows sera utilisé principalement pour :
-
-- préparer l’environnement Active Directory ;
-- joindre ou accéder au domaine de test ;
-- exécuter le collecteur Active Directory ;
-- tester LDAP ou LDAPS ;
-- tester les comptes et les groupes privilégiés ;
-- envoyer les résultats au backend.
-
-## 5. Communication entre les composants
-
-Les échanges utilisent ou utiliseront :
+Il lit :
 
 ```text
-Protocole : HTTP en développement, puis HTTPS en déploiement
-Style : API REST
-Format : JSON
+IDENTITY_AUDIT_API_EMAIL
+IDENTITY_AUDIT_API_PASSWORD
 ```
 
-Exemples de communications :
+Il appelle l’endpoint de connexion, récupère le JWT et configure le `HttpClient`.
+
+Le mot de passe et le JWT ne sont pas journalisés.
+
+## 9. Collecteur simulé
+
+Le collecteur simulé permet de tester le cycle complet sans annuaire externe.
+
+Il :
+
+1. charge les identités de démonstration ;
+2. s’authentifie auprès de l’API ;
+3. crée un audit ;
+4. démarre l’audit ;
+5. importe les données ;
+6. finalise l’audit.
+
+Il sert principalement aux tests fonctionnels rapides.
+
+## 10. Collecteur Microsoft Entra ID
+
+Le collecteur Entra ID fonctionne actuellement en mode simulé.
+
+Il reproduit des réponses paginées de Microsoft Graph à partir de fichiers JSON.
+
+Il collecte :
+
+- utilisateurs ;
+- groupes ;
+- membres des groupes ;
+- définitions de rôles ;
+- affectations de rôles.
+
+Les données sont normalisées puis transmises à l’API.
+
+Une connexion réelle nécessitera :
+
+- un tenant Microsoft Entra ID ;
+- une application enregistrée ;
+- des permissions Microsoft Graph en lecture ;
+- un mécanisme d’authentification adapté.
+
+Cette connexion réelle n’est pas incluse dans la version actuelle.
+
+## 11. Collecteur Active Directory
+
+Le collecteur Active Directory est réellement exécuté sous Windows.
+
+Il utilise :
 
 ```text
-Frontend
-    → Backend
-    Création d’une cible ou lancement d’un audit
-
-Collecteur
-    → Backend
-    Envoi des identités, groupes, rôles et relations
-
-Backend
-    → PostgreSQL
-    Stockage des objets et des résultats
-
-Frontend
-    ← Backend
-    Consultation des audits, scores et anomalies
+System.DirectoryServices.Protocols
 ```
 
-Les collecteurs ne se connectent pas directement à PostgreSQL.
+Configuration :
 
-Ils transmettent leurs données au backend, qui contrôle les requêtes avant leur enregistrement.
+```text
+AD_HOST
+AD_PORT=636
+AD_USE_SSL=true
+AD_BASE_DN
+AD_BIND_USERNAME
+AD_BIND_PASSWORD
+AD_TIMEOUT_SECONDS
+AD_TRUSTED_CA_CERTIFICATE
+```
 
-## 6. Flux d’exécution d’un audit
+Il réalise :
+
+- le test de connexion LDAPS ;
+- l’authentification du compte de lecture ;
+- la validation du certificat ;
+- la collecte des utilisateurs ;
+- la collecte des groupes ;
+- la collecte des appartenances directes et transitives ;
+- la détection des comptes désactivés ;
+- la détection des comptes de service ;
+- l’identification des groupes privilégiés ;
+- la normalisation et l’envoi à l’API.
+
+Le compte Active Directory utilisé dispose uniquement des droits de lecture nécessaires.
+
+## 12. Flux d’un audit réalisé par un collecteur
 
 ```mermaid
 sequenceDiagram
-    actor Auditeur
-    participant UI as Frontend React
-    participant API as Backend ASP.NET Core
     participant COL as Collecteur
+    participant API as API ASP.NET Core
     participant DB as PostgreSQL
     participant CIS as Moteur CIS
 
-    Auditeur->>UI: Lance un audit
-    UI->>API: POST /api/audits
-    API->>DB: Crée l'audit Pending
-    API-->>UI: Retourne l'identifiant de l'audit
+    COL->>API: Authentification
+    API-->>COL: JWT
 
-    COL->>API: POST /api/audits/{id}/start
-    API->>DB: Passe l'audit à Running
+    COL->>API: Création de l'audit
+    API->>DB: Audit Pending
+    API->>DB: Journal AuditCreated
 
-    COL->>COL: Collecte les données de la cible
-    COL->>API: Envoie les données normalisées
-    API->>DB: Enregistre les objets collectés
+    COL->>API: Démarrage
+    API->>DB: Audit Running
+    API->>DB: Journal AuditStarted
 
-    API->>CIS: Demande l'évaluation des règles
-    CIS->>DB: Lit les données de l'audit
-    CIS->>DB: Enregistre les résultats
-    CIS->>API: Retourne le score
+    COL->>API: Import des données
+    API->>DB: Identités, groupes et rôles
 
-    COL->>API: POST /api/audits/{id}/complete
-    API->>DB: Passe l'audit à Completed
+    COL->>API: Finalisation
+    API->>DB: Audit Completed
+    API->>DB: Journal AuditCompleted
 
-    UI->>API: Consulte les résultats
-    API-->>UI: Retourne les statistiques, scores et anomalies
+    COL->>API: Évaluation CIS
+    API->>CIS: Exécute les règles
+    CIS->>DB: Résultats et score
+    API->>DB: Journal AuditRulesEvaluated
 ```
 
-La partie correspondant au moteur CIS sera ajoutée progressivement après la finalisation de la collecte et du stockage des données.
+## 13. Modèle commun des données collectées
 
-## 7. Modèle commun des collecteurs
-
-Les collecteurs produiront les mêmes catégories de données :
+Les collecteurs produisent les catégories suivantes :
 
 ```text
 CollectionResult
@@ -397,633 +429,121 @@ CollectionResult
 ├── GroupMemberships
 ├── Roles
 ├── RoleAssignments
-├── Warnings
 └── CollectedAt
 ```
 
-Cette normalisation permettra au moteur CIS de fonctionner de la même manière quelle que soit la source.
+Chaque objet conserve un identifiant externe provenant de la source.
 
-Les champs qui ne sont pas disponibles dans une source seront enregistrés avec une valeur nulle ou inconnue.
+Les données d’un audit ne remplacent pas celles des audits précédents.
 
-La première version implémente actuellement la collecte des identités. Les autres catégories seront ajoutées progressivement.
+## 14. Export CSV
 
-## 8. Organisation du code
-
-```text
-identity-audit/
-├── backend/
-│   ├── IdentityAudit.Api
-│   ├── IdentityAudit.Application
-│   ├── IdentityAudit.Domain
-│   └── IdentityAudit.Infrastructure
-│
-├── frontend/
-│   └── identity-audit-ui
-│
-├── collectors/
-│   ├── mock-collector
-│   ├── entra-id
-│   └── active-directory
-│
-├── database/
-├── deployment/
-├── tests/
-├── docs/
-└── README.md
-```
-
-### 8.1 IdentityAudit.Api
-
-Le projet `IdentityAudit.Api` contient :
-
-- les Minimal APIs ;
-- les groupes d’endpoints REST ;
-- l’enregistrement des services ;
-- la configuration JSON ;
-- la validation des requêtes ;
-- la génération du document OpenAPI ;
-- la gestion des réponses HTTP.
-
-Les endpoints sont regroupés dans le dossier suivant :
+L’API expose :
 
 ```text
-Endpoints/
-├── ApiEndpoints.cs
-├── HealthEndpoints.cs
-├── TargetEndpoints.cs
-├── AuditEndpoints.cs
-├── IdentityEndpoints.cs
-└── DashboardEndpoints.cs
+GET /api/audits/{auditId}/export.csv
 ```
 
-Les anciens contrôleurs ASP.NET Core ont été remplacés par les Minimal APIs.
+L’export :
 
-### 8.2 IdentityAudit.Application
+- exige une authentification ;
+- est encodé en UTF-8 avec BOM ;
+- utilise `;` comme séparateur ;
+- contient les évaluations, constats, preuves et recommandations ;
+- est téléchargé par le frontend.
 
-Le projet `IdentityAudit.Application` contient :
+Chaque export réussi génère un événement `AuditExported`.
 
-- les interfaces de services ;
-- les modèles d’entrée ;
-- les modèles de sortie ;
-- les DTO ;
-- les résultats des opérations ;
-- les contrats utilisés entre l’API et l’infrastructure.
+## 15. Journalisation
 
-Exemples :
+Deux consultations sont proposées :
 
 ```text
-ITargetService
-IAuditService
-IIdentityService
-IDashboardService
+AuditDetails
+└── Journal
+    → événements d’un audit
+
+Administration
+└── Journal d’activité
+    → événements de tous les audits
 ```
 
-### 8.3 IdentityAudit.Domain
-
-Le projet `IdentityAudit.Domain` contient :
-
-- les entités métier ;
-- les énumérations ;
-- les relations entre les entités ;
-- les concepts indépendants des technologies ;
-- les futures règles métier.
-
-Exemples d’entités actuellement présentes :
+Événements actuellement enregistrés :
 
 ```text
-Target
-Audit
-DirectoryIdentity
+AuditCreated
+AuditStarted
+AuditCompleted
+AuditRulesEvaluated
+AuditExported
 ```
 
-### 8.4 IdentityAudit.Infrastructure
-
-Le projet `IdentityAudit.Infrastructure` contient :
-
-- Entity Framework Core ;
-- la configuration du `DbContext` ;
-- le fournisseur PostgreSQL Npgsql ;
-- les migrations ;
-- les implémentations des services ;
-- les requêtes SQL spécifiques ;
-- les mécanismes techniques de persistance.
-
-Exemples de services :
+L’endpoint global :
 
 ```text
-TargetService
-AuditService
-IdentityService
-DashboardService
+GET /api/audit-logs?limit=200
 ```
 
-## 9. Comparaison des approches ASP.NET Core
+est réservé au rôle `Administrator`.
 
-Deux approches principales ont été étudiées pour exposer les routes HTTP du backend : les contrôleurs MVC et les Minimal APIs.
+La limite acceptée est comprise entre `1` et `500`.
 
-Ces deux approches concernent la manière de construire l’API HTTP. Elles ne définissent pas, à elles seules, l’architecture générale de l’application.
+## 16. Tests
 
-### 9.1 API avec contrôleurs MVC
+Les tests d’intégration utilisent :
 
-L’approche avec contrôleurs repose sur des classes héritant généralement de `ControllerBase`.
+- xUnit ;
+- `WebApplicationFactory<Program>` ;
+- un environnement `Testing` ;
+- une authentification de test ;
+- des faux services lorsque l’accès PostgreSQL n’est pas nécessaire.
 
-Exemple :
+Ils vérifient notamment :
 
-```csharp
-[ApiController]
-[Route("api/[controller]")]
-public sealed class AuditsController : ControllerBase
-{
-}
-```
+- export sans JWT ;
+- export CSV valide ;
+- audit inconnu ;
+- journal d’un audit ;
+- journal global sans JWT ;
+- refus du rôle `Auditor` ;
+- autorisation du rôle `Administrator`.
 
-Avantages :
-
-- conventions MVC intégrées ;
-- filtres d’action ;
-- organisation connue dans les projets ASP.NET Core traditionnels ;
-- adaptée aux contrôleurs volumineux ;
-- adaptée aux applications utilisant de nombreuses fonctionnalités MVC.
-
-Inconvénients pour le projet actuel :
-
-- ajout de code répétitif ;
-- multiplication des attributs ;
-- organisation plus lourde pour des endpoints simples ;
-- nécessité de conserver plusieurs classes de contrôleurs.
-
-La première version du backend utilisait cette approche.
-
-Les contrôleurs ont ensuite été remplacés par les Minimal APIs à la suite des recommandations de l’encadrant.
-
-### 9.2 API avec Minimal APIs
-
-Les Minimal APIs permettent de déclarer les routes et leurs traitements sans créer de classes héritant de `ControllerBase`.
-
-Exemple :
-
-```csharp
-group.MapGet("/{id:guid}", GetByIdAsync)
-    .WithName("GetAuditById");
-```
-
-Avantages :
-
-- réduction du code répétitif ;
-- injection directe des services ;
-- regroupement clair des routes ;
-- lecture rapide du fonctionnement d’un endpoint ;
-- configuration plus légère ;
-- bonne adaptation aux API REST modernes ;
-- possibilité de limiter certains coûts liés au pipeline MVC ;
-- configuration centralisée avec `MapApiEndpoints()`.
-
-Le choix des Minimal APIs ne signifie pas que toutes les routes sont placées directement dans `Program.cs`.
-
-Pour conserver une organisation claire, les endpoints ont été répartis dans plusieurs fichiers spécialisés :
+État validé :
 
 ```text
-HealthEndpoints
-TargetEndpoints
-AuditEndpoints
-IdentityEndpoints
-DashboardEndpoints
+9 tests réussis
+0 test échoué
 ```
 
-La méthode `MapApiEndpoints()` centralise uniquement leur enregistrement.
-
-### 9.3 Architecture retenue
-
-L’architecture retenue est une architecture monolithique en couches, inspirée des principes de la Clean Architecture.
-
-Elle repose sur :
-
-- ASP.NET Core 10 ;
-- les Minimal APIs ;
-- l’injection de dépendances ;
-- des interfaces de services dans la couche Application ;
-- des implémentations dans la couche Infrastructure ;
-- Entity Framework Core ;
-- PostgreSQL.
-
-Le découpage principal est le suivant :
-
-```text
-IdentityAudit.Api
-        ↓
-IdentityAudit.Application
-        ↓
-IdentityAudit.Domain
-
-IdentityAudit.Infrastructure
-        ↑
-Implémente les interfaces définies
-dans la couche Application
-```
-
-Le flux d’une requête est :
-
-```text
-Minimal API
-    ↓
-Interface de service
-    ↓
-Implémentation du service
-    ↓
-Entity Framework Core ou requête SQL
-    ↓
-PostgreSQL
-```
-
-Cette architecture offre un compromis entre :
-
-- simplicité ;
-- séparation des responsabilités ;
-- lisibilité ;
-- testabilité ;
-- facilité de maintenance ;
-- possibilité d’évolution.
-
-### 9.4 Choix de ne pas utiliser MediatR
-
-MediatR n’est pas une architecture ASP.NET Core.
-
-Il s’agit d’une bibliothèque qui met en œuvre le patron de conception Mediator. Elle est souvent utilisée avec le modèle CQRS afin de séparer les commandes et les requêtes.
-
-Avec MediatR, le flux pourrait devenir :
-
-```text
-Endpoint
-   ↓
-MediatR
-   ↓
-Commande ou requête
-   ↓
-Handler
-   ↓
-Persistance ou service technique
-```
-
-Cette approche peut être utile dans :
-
-- les applications très complexes ;
-- les systèmes comportant de nombreuses commandes et requêtes ;
-- les architectures CQRS ;
-- les applications nécessitant des pipelines applicatifs avancés ;
-- les projets possédant de nombreux comportements transversaux.
-
-Dans le projet Identity Audit, son utilisation aurait nécessité l’ajout de commandes, de requêtes et de handlers supplémentaires.
-
-Pour la taille actuelle du projet, cette abstraction n’apporte pas de bénéfice suffisant.
-
-Le projet n’utilise donc pas MediatR.
-
-Les Minimal APIs appellent directement les interfaces de services par l’intermédiaire de l’injection de dépendances.
-
-Le flux retenu reste ainsi simple :
-
-```text
-Minimal API
-    ↓
-Interface de service
-    ↓
-Implémentation du service
-    ↓
-PostgreSQL
-```
-
-## 10. Optimisation PostgreSQL du tableau de bord
-
-Une optimisation spécifique de PostgreSQL a été réalisée afin de préparer le futur tableau de bord.
-
-### 10.1 Analyse initiale
-
-Les index présents avant l’optimisation étaient notamment :
-
-```text
-IX_Audits_TargetId
-IX_Identities_AuditId
-IX_Identities_AuditId_ExternalId
-```
-
-L’index unique suivant couvre déjà les recherches utilisant uniquement `AuditId`, car `AuditId` constitue sa première colonne :
-
-```text
-IX_Identities_AuditId_ExternalId
-```
-
-L’index simple `IX_Identities_AuditId` a donc été supprimé afin d’éviter un index redondant.
-
-### 10.2 Index composite des audits
-
-L’index simple sur `Audits(TargetId)` a été remplacé par :
-
-```text
-IX_Audits_TargetId_CreatedAt
-```
-
-Sa définition correspond à :
-
-```sql
-CREATE INDEX "IX_Audits_TargetId_CreatedAt"
-ON public."Audits" ("TargetId", "CreatedAt" DESC);
-```
-
-Il répond aux requêtes du type :
-
-```sql
-SELECT *
-FROM "Audits"
-WHERE "TargetId" = p_target_id
-ORDER BY "CreatedAt" DESC;
-```
-
-Il permet de filtrer les audits d’une cible et de les parcourir directement du plus récent au plus ancien.
-
-### 10.3 Vue PostgreSQL
-
-La vue suivante a été créée :
-
-```text
-vw_AuditDashboardSummary
-```
-
-Elle réalise les jointures entre :
-
-```text
-Targets
-Audits
-Identities
-```
-
-Elle calcule pour chaque audit :
-
-- le nombre total d’identités ;
-- le nombre de comptes actifs ;
-- le nombre de comptes désactivés ;
-- le nombre de comptes privilégiés ;
-- le nombre de comptes de service ;
-- le nombre de comptes invités ;
-- le nombre de comptes verrouillés.
-
-La vue simplifie les requêtes nécessaires au tableau de bord en centralisant les jointures et les agrégations.
-
-Il s’agit d’une vue PostgreSQL normale. Elle ne stocke pas physiquement les résultats comme une vue matérialisée.
-
-### 10.4 Fonction PostgreSQL
-
-La fonction suivante a été créée :
-
-```text
-fn_GetTargetDashboard(uuid)
-```
-
-Elle prend l’identifiant d’une cible en paramètre et retourne les résultats de la vue correspondant à cette cible.
-
-Les résultats sont classés selon :
-
-```sql
-ORDER BY "CreatedAt" DESC
-```
-
-Le flux PostgreSQL est le suivant :
-
-```text
-fn_GetTargetDashboard(uuid)
-          ↓
-vw_AuditDashboardSummary
-          ↓
-Targets + Audits + Identities
-```
-
-### 10.5 Service du dashboard
-
-Le backend appelle la fonction PostgreSQL à travers :
-
-```text
-IDashboardService
-DashboardService
-```
-
-Le service utilise une requête SQL paramétrée avec Entity Framework Core.
-
-Le résultat PostgreSQL est converti en objets :
-
-```text
-DashboardAuditDto
-```
-
-Les compteurs issus de `COUNT()` sont représentés en C# avec le type `long`, correspondant au type PostgreSQL `bigint`.
-
-### 10.6 Endpoint du dashboard
-
-L’endpoint suivant a été ajouté :
-
-```http
-GET /api/dashboard/targets/{targetId}
-```
-
-Son comportement est le suivant :
-
-```text
-Cible existante avec audits
-        → 200 OK avec les statistiques
-
-Cible existante sans audit
-        → 200 OK avec une liste vide
-
-Cible inexistante
-        → 404 Not Found
-```
-
-Le flux complet est :
-
-```text
-DashboardEndpoints
-        ↓
-IDashboardService
-        ↓
-DashboardService
-        ↓
-fn_GetTargetDashboard(uuid)
-        ↓
-vw_AuditDashboardSummary
-        ↓
-PostgreSQL
-```
-
-### 10.7 Analyse des performances
-
-Les requêtes ont été analysées avec :
-
-```sql
-EXPLAIN (ANALYZE, BUFFERS)
-```
-
-La base de test contenait au moment de la mesure :
-
-```text
-2 cibles
-6 audits
-20 identités
-```
-
-Sur une table contenant seulement six audits, PostgreSQL a choisi une lecture séquentielle.
-
-Ce choix est normal, car lire directement une très petite table peut être plus rapide que parcourir un index.
-
-Le plan obtenu pour la recherche des audits indiquait notamment :
-
-```text
-Seq Scan on Audits
-Execution Time: environ 0,564 ms
-```
-
-Afin de vérifier que l’index composite était correctement utilisable, la lecture séquentielle a été temporairement désactivée uniquement pendant un test.
-
-PostgreSQL a alors utilisé :
-
-```text
-Index Scan using IX_Audits_TargetId_CreatedAt
-```
-
-avec un temps d’exécution d’environ :
-
-```text
-0,534 ms
-```
-
-Cette configuration n’a pas été conservée. PostgreSQL doit rester libre de choisir automatiquement le meilleur plan d’exécution.
-
-L’analyse de la fonction complète du tableau de bord a également montré l’utilisation de :
-
-```text
-PK_Targets
-IX_Identities_AuditId_ExternalId
-```
-
-Le temps d’exécution observé pour la fonction complète était d’environ :
-
-```text
-1,303 ms
-```
-
-Ces mesures sont réalisées sur une petite base de test. L’intérêt de l’index composite sera plus visible lorsque la base contiendra un grand nombre de cibles, d’audits et d’identités.
-
-## 11. Principes de sécurité
-
-L’architecture respecte ou devra respecter les principes suivants :
-
-- accès en lecture seule aux annuaires ;
-- aucun mot de passe ni secret dans Git ;
-- secrets fournis par variables d’environnement ou par un mécanisme sécurisé ;
-- validation des données envoyées à l’API ;
-- contrôle futur des rôles de l’application ;
-- limitation des permissions Microsoft Graph ;
-- utilisation de LDAPS lorsque l’environnement le permet ;
-- journalisation des opérations sensibles ;
-- communications HTTPS lors du déploiement ;
-- absence de correction automatique des comptes dans le MVP ;
-- séparation entre la collecte, l’analyse et la présentation ;
-- utilisation de requêtes SQL paramétrées ;
-- limitation des informations sensibles enregistrées dans les journaux.
-
-Les collecteurs disposeront uniquement des droits nécessaires à la lecture des données.
-
-Le backend sera le seul composant applicatif autorisé à modifier les données dans PostgreSQL.
-
-## 12. Déploiement prévu
-
-Le déploiement principal sera réalisé sur Linux.
-
-```mermaid
-flowchart TD
-    BROWSER[Navigateur]
-    NGINX[Nginx]
-    UI[Frontend React]
-    API[API ASP.NET Core]
-    DB[(PostgreSQL)]
-
-    BROWSER -->|HTTPS| NGINX
-    NGINX --> UI
-    NGINX --> API
-    API --> DB
-```
-
-Ordre prévu :
-
-1. installer PostgreSQL ;
-2. créer la base de données et le compte applicatif ;
-3. appliquer les migrations Entity Framework Core ;
-4. publier le backend ASP.NET Core ;
-5. construire le frontend React ;
-6. configurer les variables d’environnement ;
-7. créer un service `systemd` pour le backend ;
-8. configurer éventuellement Nginx ;
-9. activer HTTPS ;
-10. tester l’ensemble de l’application.
-
-Docker reste une amélioration optionnelle après la validation du MVP.
-
-## 13. Première chaîne fonctionnelle réalisée
-
-La première chaîne fonctionnelle a été validée avec le collecteur simulé.
-
-Elle suit actuellement le flux suivant :
-
-```text
-Données fictives
-        ↓
-Collecteur simulé C#
-        ↓
-Minimal APIs ASP.NET Core
-        ↓
-Services applicatifs
-        ↓
-Entity Framework Core
-        ↓
-PostgreSQL
-        ↓
-Endpoint du tableau de bord
-```
-
-Les fonctionnalités validées comprennent :
-
-- la gestion des cibles ;
-- le test simulé de connexion à une cible ;
-- la création d’un audit ;
-- le passage d’un audit de `Pending` à `Running` ;
-- l’importation des identités ;
-- le passage de l’audit à `Completed` ;
-- la mise à jour de la dernière collecte ;
-- la consultation des identités d’un audit ;
-- la consultation des statistiques du tableau de bord ;
-- la gestion des erreurs `404 Not Found` ;
-- la validation des requêtes incorrectes avec `400 Bad Request`.
-
-Les principales routes actuellement disponibles sont :
-
-```text
-GET  /api/health
-
-GET  /api/targets
-GET  /api/targets/{id}
-POST /api/targets
-PUT  /api/targets/{id}
-POST /api/targets/{id}/test-connection
-
-GET  /api/audits
-GET  /api/audits/{id}
-POST /api/audits
-POST /api/audits/{id}/start
-POST /api/audits/{id}/complete
-
-GET  /api/audits/{auditId}/identities
-POST /api/audits/{auditId}/identities
-
-GET  /api/dashboard/targets/{targetId}
-```
-
-La prochaine étape consistera à remplacer progressivement les données fictives par des données provenant de Microsoft Entra ID, puis d’Active Directory On-Premise.
-
-Le moteur d’évaluation des règles liées aux CIS Controls 5 et 6 sera ensuite ajouté sur cette base fonctionnelle.
+## 17. Sécurité
+
+Mesures implémentées :
+
+- mots de passe hachés avec ASP.NET Core Identity ;
+- politique de mot de passe ;
+- verrouillage après plusieurs échecs ;
+- JWT signés et expirables ;
+- RBAC ;
+- compte collecteur limité à `Auditor` ;
+- compte AD limité à la lecture ;
+- LDAPS avec certificat ;
+- secrets fournis par variables d’environnement ;
+- aucun mot de passe ou JWT dans les journaux ;
+- export et journal global protégés.
+
+## 18. Limites et évolutions
+
+Limites actuelles :
+
+- Entra ID fonctionne avec Microsoft Graph simulé ;
+- HTTP est utilisé entre les machines du laboratoire ;
+- le test de cible depuis l’interface reste simulé ;
+- le journal global contient actuellement les événements associés aux audits.
+
+Évolutions possibles :
+
+- connexion réelle à Microsoft Entra ID ;
+- HTTPS entre tous les composants ;
+- journalisation des actions d’administration ;
+- pagination serveur des journaux ;
+- automatisation du déploiement.

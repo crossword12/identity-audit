@@ -1,6 +1,6 @@
 # Identity Audit — Frontend
 
-Interface React de la plateforme Identity Audit dédiée à l’audit des identités et des privilèges selon les CIS Controls 5 et 6.
+Interface React de la plateforme Identity Audit consacrée à l’audit des identités et des privilèges selon les CIS Controls 5 et 6.
 
 ## Stack
 
@@ -12,7 +12,35 @@ Interface React de la plateforme Identity Audit dédiée à l’audit des identi
 - Lucide React ;
 - CSS.
 
+## Authentification et autorisation
+
+L’interface utilise l’authentification JWT fournie par l’API.
+
+Le jeton est automatiquement ajouté aux appels protégés :
+
+```http
+Authorization: Bearer <JWT>
+```
+
+Trois rôles sont disponibles :
+
+| Rôle            | Accès                                            |
+| --------------- | ------------------------------------------------ |
+| `Reader`        | Consultation des audits et résultats             |
+| `Auditor`       | Consultation et gestion des audits               |
+| `Administrator` | Gestion complète, utilisateurs et journal global |
+
+Les routes d’administration sont protégées à la fois dans le frontend et dans l’API.
+
 ## Fonctionnalités
+
+### Connexion
+
+- authentification par adresse électronique et mot de passe ;
+- récupération du profil connecté ;
+- conservation contrôlée de la session ;
+- déconnexion ;
+- redirection vers la page de connexion en cas de session invalide.
 
 ### Tableau de bord
 
@@ -22,20 +50,19 @@ Interface React de la plateforme Identity Audit dédiée à l’audit des identi
 - nombre de constats ;
 - score de conformité CIS ;
 - répartition des constats par gravité ;
-- distinction entre CIS Control 5 et CIS Control 6 ;
-- affichage des trois audits les plus récents ;
-- conservation des audits en attente dans l’historique.
+- distinction CIS Control 5 et CIS Control 6 ;
+- affichage des audits récents.
 
 ### Cibles
 
 - liste des cibles ;
-- distinction entre Microsoft Entra ID et Active Directory ;
-- affichage du statut et de la dernière collecte ;
-- création d’une cible ;
-- modification d’une cible ;
+- distinction Microsoft Entra ID et Active Directory ;
+- création et modification ;
 - activation et désactivation ;
 - validation de la configuration JSON ;
 - test de connexion.
+
+Le test depuis cette page reste simulé. La connexion Active Directory réelle est effectuée par le collecteur Windows avec LDAPS.
 
 ### Audits
 
@@ -46,48 +73,90 @@ Interface React de la plateforme Identity Audit dédiée à l’audit des identi
 - démarrage d’un audit en attente ;
 - finalisation d’un audit en cours ;
 - affichage du score CIS ;
-- accès au détail d’un audit.
+- accès au détail.
 
 ### Détail d’un audit
 
-La page de détail est organisée en quatre onglets :
+La page est organisée en cinq onglets :
 
-- **Résultats CIS** : règles, statuts, sévérités, constats, preuves et recommandations ;
-- **Identités** : comptes collectés, états, types et privilèges ;
-- **Groupes** : groupes d’annuaire, groupes privilégiés et appartenances ;
-- **Rôles** : rôles, privilèges et affectations.
+- **Résultats CIS** : statuts, sévérités, constats, preuves et recommandations ;
+- **Identités** : comptes, états, types et privilèges ;
+- **Groupes** : groupes d’annuaire et appartenances ;
+- **Rôles** : rôles, privilèges et affectations ;
+- **Journal** : historique des opérations réalisées sur l’audit.
+
+Les résultats CIS peuvent également être téléchargés en CSV.
+
+### Utilisateurs
+
+Cette page est réservée aux administrateurs.
+
+Elle permet :
+
+- de consulter les utilisateurs ;
+- de créer un compte ;
+- de modifier un compte ;
+- d’activer ou désactiver un compte ;
+- de gérer ses rôles.
+
+### Journal d’activité
+
+Cette page est réservée aux administrateurs.
+
+Elle affiche les événements de tous les audits avec :
+
+- date ;
+- type d’événement ;
+- niveau ;
+- utilisateur ;
+- audit concerné ;
+- message ;
+- recherche ;
+- filtre par niveau ;
+- lien vers le détail de l’audit.
 
 ## Routes
 
-| Route              | Page               |
-| ------------------ | ------------------ |
-| `/`                | Tableau de bord    |
-| `/targets`         | Gestion des cibles |
-| `/audits`          | Gestion des audits |
-| `/audits/:auditId` | Détail d’un audit  |
+| Route              | Page               | Accès           |
+| ------------------ | ------------------ | --------------- |
+| `/login`           | Connexion          | Public          |
+| `/`                | Tableau de bord    | Authentifié     |
+| `/targets`         | Cibles             | Authentifié     |
+| `/audits`          | Audits             | Authentifié     |
+| `/audits/:auditId` | Détail d’un audit  | Authentifié     |
+| `/users`           | Utilisateurs       | `Administrator` |
+| `/activity-logs`   | Journal d’activité | `Administrator` |
 
 ## Structure du code
 
 ```text
 src/
 ├── api/
+│   ├── auditLogsApi.ts
 │   ├── auditsApi.ts
+│   ├── authenticationApi.ts
 │   ├── dashboardApi.ts
 │   ├── directoryAccessApi.ts
 │   ├── httpClient.ts
 │   ├── identitiesApi.ts
 │   ├── ruleEvaluationsApi.ts
-│   └── targetsApi.ts
+│   ├── targetsApi.ts
+│   └── usersApi.ts
+├── auth/
 ├── components/
 │   ├── audit-details/
 │   ├── audits/
 │   ├── layout/
-│   └── targets/
+│   ├── targets/
+│   └── users/
 ├── pages/
+│   ├── ActivityLogs/
 │   ├── AuditDetails/
 │   ├── Audits/
 │   ├── Dashboard/
-│   └── Targets/
+│   ├── Login/
+│   ├── Targets/
+│   └── Users/
 ├── routes/
 ├── types/
 ├── App.tsx
@@ -103,31 +172,33 @@ src/
 
 ## Installation
 
-Depuis le dossier `frontend` :
+Depuis la racine du dépôt :
 
 ```bash
-npm install
+npm --prefix frontend install
 ```
 
-Créer le fichier d’environnement local :
+Créer la configuration locale :
 
 ```bash
-cp .env.example .env
+cp frontend/.env.example frontend/.env
 ```
 
-Contenu attendu :
+Contenu :
 
 ```env
 VITE_API_BASE_URL=http://localhost:5173
 ```
 
-## Lancement en développement
+## Lancement
+
+Depuis la racine :
 
 ```bash
-npm run dev
+npm --prefix frontend run dev
 ```
 
-Le serveur Vite utilise le port fixe :
+Le frontend utilise :
 
 ```text
 http://localhost:5174
@@ -139,15 +210,6 @@ L’API doit être disponible sur :
 http://localhost:5173
 ```
 
-## Scripts
-
-| Commande          | Description                             |
-| ----------------- | --------------------------------------- |
-| `npm run dev`     | Démarrer le serveur de développement    |
-| `npm run build`   | Vérifier TypeScript et générer le build |
-| `npm run lint`    | Analyser le code avec Oxlint            |
-| `npm run preview` | Prévisualiser le build de production    |
-
 ## Communication avec l’API
 
 Les appels HTTP sont centralisés dans :
@@ -156,20 +218,13 @@ Les appels HTTP sont centralisés dans :
 src/api/httpClient.ts
 ```
 
-L’adresse de base provient de :
+Ce client :
 
-```env
-VITE_API_BASE_URL
-```
+- utilise `VITE_API_BASE_URL` ;
+- ajoute automatiquement le JWT ;
+- centralise les traitements liés à l’authentification.
 
-Les services API sont séparés par domaine :
-
-- Dashboard ;
-- cibles ;
-- audits ;
-- identités ;
-- groupes et rôles ;
-- évaluations des règles.
+Les services sont séparés par domaine fonctionnel.
 
 ## Organisation des styles
 
@@ -179,47 +234,41 @@ Les variables globales et la charte graphique sont définies dans :
 src/index.css
 ```
 
-Les styles spécifiques sont séparés par page ou composant :
-
-```text
-DashboardPage.css
-TargetsPage.css
-AuditsPage.css
-AuditDetailsPage.css
-```
-
-Cette organisation limite les conflits entre les pages tout en conservant une charte graphique commune.
+Les pages et composants possèdent leurs propres fichiers CSS afin de limiter les conflits.
 
 ## Charte graphique
 
-| Usage              | Couleur   |
-| ------------------ | --------- |
-| Couleur principale | `#1F4E78` |
-| Couleur secondaire | `#2F75B5` |
-| Fond général       | `#F5F7FA` |
-| Cartes             | `#FFFFFF` |
-| Texte principal    | `#1F2937` |
-| Texte secondaire   | `#6B7280` |
-| Succès             | `#22C55E` |
-| Danger             | `#DC2626` |
-| Avertissement      | `#F59E0B` |
+| Usage            | Couleur   |
+| ---------------- | --------- |
+| Principale       | `#1F4E78` |
+| Secondaire       | `#2F75B5` |
+| Fond général     | `#F5F7FA` |
+| Cartes           | `#FFFFFF` |
+| Texte principal  | `#1F2937` |
+| Texte secondaire | `#6B7280` |
+| Succès           | `#22C55E` |
+| Danger           | `#DC2626` |
+| Avertissement    | `#F59E0B` |
 
-## Build de production
+## Scripts
+
+| Commande          | Description                             |
+| ----------------- | --------------------------------------- |
+| `npm run dev`     | Démarrer Vite                           |
+| `npm run build`   | Vérifier TypeScript et générer le build |
+| `npm run lint`    | Analyser le code                        |
+| `npm run preview` | Prévisualiser le build                  |
+
+Depuis la racine du dépôt :
 
 ```bash
-npm run build
+npm --prefix frontend run build
 ```
 
-Les fichiers compilés sont générés dans :
+Les fichiers générés sont placés dans :
 
 ```text
-dist/
-```
-
-Pour les prévisualiser :
-
-```bash
-npm run preview
+frontend/dist/
 ```
 
 ## Vérifications recommandées
@@ -227,16 +276,21 @@ npm run preview
 Avant une livraison :
 
 ```bash
-npm run lint
-npm run build
+npm --prefix frontend run lint
+npm --prefix frontend run build
 ```
 
-Vérifier ensuite :
+Vérifier manuellement :
 
-- le changement de cible dans le Dashboard ;
-- la création et la modification d’une cible ;
-- la création d’un audit ;
-- le filtrage des audits ;
-- l’accès aux détails ;
-- l’affichage des identités, groupes et rôles ;
-- l’adaptation de l’interface sur un écran étroit.
+- connexion et déconnexion ;
+- restrictions selon les rôles ;
+- tableau de bord ;
+- gestion des cibles ;
+- cycle des audits ;
+- cinq onglets du détail ;
+- export CSV ;
+- journal d’un audit ;
+- gestion des utilisateurs ;
+- journal d’activité global ;
+- recherche et filtres ;
+- affichage sur différentes tailles d’écran.

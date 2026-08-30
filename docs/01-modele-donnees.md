@@ -71,7 +71,7 @@ Un groupe représente un groupe provenant de Microsoft Entra ID ou d’Active Di
 | IsPrivileged | Booléen        | Indique si le groupe est sensible ou privilégié |
 | CollectedAt  | Date           | Date et heure de collecte                       |
 
-Une contrainte d’unicité pourra être appliquée sur :
+Une contrainte d’unicité est appliquée sur :
 
 ```text
 AuditId + ExternalId
@@ -86,16 +86,16 @@ Cette entité représente la relation entre une identité et un groupe d’annua
 | Id             | UUID  | Identifiant interne                   |
 | IdentityId     | UUID  | Identité membre                       |
 | GroupId        | UUID  | Groupe concerné                       |
-| MembershipType | Texte | Appartenance `Directe` ou `Indirecte` |
+| MembershipType | Texte | Appartenance `Direct` ou `Transitive` |
 | CollectedAt    | Date  | Date et heure de collecte             |
 
-Une contrainte d’unicité pourra être appliquée sur :
+Une contrainte d’unicité est appliquée sur :
 
 ```text
 IdentityId + GroupId
 ```
 
-Les identités et les groupes reliés devront appartenir au même audit.
+Les identités et les groupes reliés doivent appartenir au même audit.
 
 ## 5. Rôle d’annuaire
 
@@ -112,7 +112,7 @@ Un rôle représente une fonction ou un niveau d’autorisation dans Microsoft E
 | IsPrivileged | Booléen        | Indique si le rôle est sensible ou privilégié |
 | CollectedAt  | Date           | Date et heure de collecte                     |
 
-Une contrainte d’unicité pourra être appliquée sur :
+Une contrainte d’unicité est appliquée sur :
 
 ```text
 AuditId + ExternalId
@@ -132,11 +132,11 @@ Cette entité représente l’attribution d’un rôle d’annuaire à une ident
 | IsPermanent     | Booléen       | Attribution permanente ou temporaire |
 | CollectedAt     | Date          | Date et heure de collecte            |
 
-L’identité et le rôle reliés devront appartenir au même audit.
+L’identité et le rôle reliés doivent appartenir au même audit.
 
 ## 7. Principes de normalisation
 
-Les données provenant de Microsoft Entra ID et d’Active Directory seront converties vers un modèle commun.
+Les données provenant de Microsoft Entra ID et d’Active Directory sont converties vers un modèle commun.
 
 Principes retenus :
 
@@ -155,19 +155,23 @@ Principes retenus :
 
 ## 8. État d’implémentation
 
-Dans la version actuelle du projet, les éléments suivants sont déjà implémentés :
+Le modèle commun est implémenté pour :
 
-- la gestion des cibles ;
-- la gestion des audits ;
-- la collecte et le stockage des identités ;
-- la relation entre une identité et son audit ;
-- la contrainte d’unicité `AuditId + ExternalId`.
-
-Les éléments suivants font encore partie du modèle prévisionnel :
-
+- les cibles ;
+- les audits ;
+- les identités ;
 - les groupes d’annuaire ;
-- les appartenances aux groupes ;
+- les appartenances directes et transitives ;
 - les rôles d’annuaire ;
-- les attributions de rôles.
+- les affectations de rôles ;
+- le catalogue des règles CIS ;
+- les évaluations ;
+- les preuves structurées ;
+- les recommandations ;
+- les journaux d’audit.
 
-Ils seront ajoutés progressivement lors de l’intégration des collecteurs Microsoft Entra ID et Active Directory réels.
+Les collecteurs transmettent les données normalisées à l’API après authentification JWT.
+
+Le collecteur Active Directory a été validé avec un domaine réel de laboratoire en LDAPS sur le port `636`.
+
+Le collecteur Microsoft Entra ID utilise actuellement des fichiers JSON simulant les réponses paginées de Microsoft Graph. Le modèle de données et le cycle d’import sont opérationnels, mais la connexion à un tenant réel reste une évolution.
