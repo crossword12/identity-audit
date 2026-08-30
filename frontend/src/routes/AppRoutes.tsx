@@ -9,6 +9,7 @@ import TargetsPage from "../pages/Targets/TargetsPage";
 import { ApplicationRoles } from "../auth/authorization";
 import RequireRole from "../auth/RequireRole";
 import UsersPage from "../pages/Users/UsersPage";
+import ActivityLogsPage from "../pages/ActivityLogs/ActivityLogsPage";
 
 function AppRoutes() {
   return (
@@ -31,6 +32,7 @@ function AppRoutes() {
               }
             >
               <Route path="users" element={<UsersPage />} />
+              <Route path="activity-logs" element={<ActivityLogsPage />} />
             </Route>
           </Route>
         </Route>

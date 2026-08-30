@@ -10,3 +10,18 @@ export async function getAuditLogs(
 
   return response.data;
 }
+
+export async function getGlobalAuditLogs(
+  limit = 200,
+): Promise<AuditLog[]> {
+  const response = await httpClient.get<AuditLog[]>(
+    "/api/audit-logs",
+    {
+      params: {
+        limit,
+      },
+    },
+  );
+
+  return response.data;
+}

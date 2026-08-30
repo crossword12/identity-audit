@@ -238,34 +238,59 @@ internal sealed class TestAuthenticationHandler
     }
 
     protected override Task<AuthenticateResult>
-        HandleAuthenticateAsync()
+    HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue(
                 UserHeaderName,
-                out var userValue) ||
-            !string.Equals(
-                userValue.ToString(),
-                "auditor",
-                StringComparison.OrdinalIgnoreCase))
+                out var userValue))
         {
             return Task.FromResult(
                 AuthenticateResult.NoResult());
         }
 
+        var testUser =
+            userValue
+                .ToString()
+                .Trim()
+                .ToLowerInvariant();
+
+        var role =
+            testUser switch
+            {
+                "auditor" =>
+                    ApplicationRoles.Auditor,
+
+                "administrator" =>
+                    ApplicationRoles.Administrator,
+
+                _ => null
+            };
+
+        if (role is null)
+        {
+            return Task.FromResult(
+                AuthenticateResult.NoResult());
+        }
+
+        var displayName =
+            role == ApplicationRoles.Administrator
+                ? "Administrateur de test"
+                : "Auditeur de test";
+
         var claims = new[]
         {
-            new Claim(
-                ClaimTypes.NameIdentifier,
-                "integration-test-auditor"),
+        new Claim(
+            ClaimTypes.NameIdentifier,
+            $"integration-test-{testUser}"),
 
-            new Claim(
-                ClaimTypes.Name,
-                "Auditeur de test"),
+        new Claim(
+            ClaimTypes.Name,
+            displayName),
 
-            new Claim(
-                ClaimTypes.Role,
-                ApplicationRoles.Auditor)
-        };
+        new Claim(
+            ClaimTypes.Role,
+            role)
+    };
 
         var identity =
             new ClaimsIdentity(
@@ -352,6 +377,15 @@ internal sealed class FakeAuditExportService
 
             return Task.FromResult(result);
         }
+        public Task<IReadOnlyList<AuditLogDto>> GetAllAsync(
+            int maximumCount,
+            CancellationToken cancellationToken = default)
+        {
+            IReadOnlyList<AuditLogDto> auditLogs =
+                Array.Empty<AuditLogDto>();
+
+            return Task.FromResult(auditLogs);
+        }
     }
 }
 internal sealed class FakeAuditLogService
@@ -380,5 +414,14 @@ internal sealed class FakeAuditLogService
                 : null;
 
         return Task.FromResult(result);
+    }
+    public Task<IReadOnlyList<AuditLogDto>> GetAllAsync(
+    int maximumCount,
+    CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<AuditLogDto> auditLogs =
+            Array.Empty<AuditLogDto>();
+
+        return Task.FromResult(auditLogs);
     }
 }

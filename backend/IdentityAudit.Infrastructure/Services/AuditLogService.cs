@@ -108,4 +108,49 @@ public sealed class AuditLogService
                 auditLog.CreatedAt)
         ).ToListAsync(cancellationToken);
     }
+    public async Task<IReadOnlyList<AuditLogDto>>
+    GetAllAsync(
+        int maximumCount,
+        CancellationToken cancellationToken = default)
+    {
+        if (maximumCount is < 1 or > 500)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maximumCount),
+                "Le nombre maximal d'événements doit être compris entre 1 et 500.");
+        }
+
+        return await (
+            from auditLog in
+                _dbContext.AuditLogs.AsNoTracking()
+
+            join applicationUser in
+                _dbContext.Users.AsNoTracking()
+                on auditLog.ApplicationUserId
+                equals (Guid?)applicationUser.Id
+                into matchingUsers
+
+            from applicationUser in
+                matchingUsers.DefaultIfEmpty()
+
+            orderby auditLog.CreatedAt descending
+
+            select new AuditLogDto(
+                auditLog.Id,
+                auditLog.AuditId,
+                auditLog.ApplicationUserId,
+                applicationUser == null
+                    ? null
+                    : applicationUser.DisplayName,
+                applicationUser == null
+                    ? null
+                    : applicationUser.Email,
+                auditLog.Level,
+                auditLog.EventType,
+                auditLog.Message,
+                auditLog.CreatedAt)
+        )
+        .Take(maximumCount)
+        .ToListAsync(cancellationToken);
+    }
 }

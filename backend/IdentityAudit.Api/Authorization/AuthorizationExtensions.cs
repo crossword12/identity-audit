@@ -40,6 +40,13 @@ public static class AuthorizationExtensions
                     .RequireAuthenticatedUser()
                     .RequireRole(
                         ApplicationRoles.Administrator));
+
+            options.AddPolicy(
+                AuthorizationPolicies.CanReadActivityLogs,
+                policy => policy
+                    .RequireAuthenticatedUser()
+                    .RequireRole(
+                        ApplicationRoles.Administrator));
         });
 
         return services;

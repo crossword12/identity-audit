@@ -15,4 +15,8 @@ public interface IAuditLogService
     Task<IReadOnlyList<AuditLogDto>?> GetByAuditAsync(
         Guid auditId,
         CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AuditLogDto>> GetAllAsync(
+    int maximumCount,
+    CancellationToken cancellationToken = default);
 }

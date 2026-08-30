@@ -10,6 +10,7 @@ public static class ApiEndpoints
         endpoints.MapHealthEndpoints();
         endpoints.MapTargetEndpoints();
         endpoints.MapAuditEndpoints();
+        endpoints.MapAuditLogEndpoints();
         endpoints.MapIdentityEndpoints();
         endpoints.MapDirectoryGroupEndpoints();
         endpoints.MapGroupMembershipEndpoints();

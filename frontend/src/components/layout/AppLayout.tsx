@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   LogOut,
   ScanSearch,
+  ScrollText,
   Server,
   ShieldCheck,
   Users,
@@ -76,10 +77,19 @@ function AppLayout() {
           </NavLink>
 
           {mayManageUsers && (
-            <NavLink to="/users">
-              <Users size={20} />
-              Utilisateurs
-            </NavLink>
+            <div className="navigation-administration">
+              <span className="navigation-section-label">Administration</span>
+
+              <NavLink to="/users">
+                <Users size={20} />
+                Utilisateurs
+              </NavLink>
+
+              <NavLink to="/activity-logs">
+                <ScrollText size={20} />
+                Journal d’activité
+              </NavLink>
+            </div>
           )}
         </nav>
 

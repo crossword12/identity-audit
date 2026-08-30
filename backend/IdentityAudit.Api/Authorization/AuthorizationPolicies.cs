@@ -13,4 +13,7 @@ public static class AuthorizationPolicies
 
     public const string CanManageUsers =
         nameof(CanManageUsers);
+
+    public const string CanReadActivityLogs =
+    nameof(CanReadActivityLogs);
 }
