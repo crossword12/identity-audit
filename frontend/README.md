@@ -85,7 +85,7 @@ La page est organisée en cinq onglets :
 - **Rôles** : rôles, privilèges et affectations ;
 - **Journal** : historique des opérations réalisées sur l’audit.
 
-Les résultats CIS peuvent également être téléchargés en CSV.
+Les résultats CIS peuvent être téléchargés en CSV ou sous la forme d’un rapport PDF détaillé.
 
 ### Utilisateurs
 
@@ -288,7 +288,7 @@ Vérifier manuellement :
 - gestion des cibles ;
 - cycle des audits ;
 - cinq onglets du détail ;
-- export CSV ;
+- exports CSV et PDF ;
 - journal d’un audit ;
 - gestion des utilisateurs ;
 - journal d’activité global ;

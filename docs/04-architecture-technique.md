@@ -121,7 +121,7 @@ Fonctionnalités principales :
 - consultation des groupes et appartenances ;
 - consultation des rôles et affectations ;
 - résultats CIS ;
-- export CSV ;
+- exports CSV et PDF ;
 - journal d’un audit ;
 - gestion des utilisateurs ;
 - journal d’activité global.
@@ -173,7 +173,7 @@ Cette couche contient :
 - ASP.NET Core Identity ;
 - la génération des JWT ;
 - le moteur d’évaluation CIS ;
-- l’export CSV ;
+- les exports CSV et PDF avec QuestPDF ;
 - la journalisation.
 
 ### 5.4 IdentityAudit.Api
@@ -436,23 +436,51 @@ Chaque objet conserve un identifiant externe provenant de la source.
 
 Les données d’un audit ne remplacent pas celles des audits précédents.
 
-## 14. Export CSV
+## 14. Exports CSV et PDF
 
-L’API expose :
+L’API expose deux formats d’export :
 
 ```text
 GET /api/audits/{auditId}/export.csv
+GET /api/audits/{auditId}/export.pdf
 ```
 
-L’export :
+Les deux endpoints :
 
-- exige une authentification ;
+- exigent une authentification ;
+- vérifient l’existence de l’audit ;
+- récupèrent les résultats CIS associés ;
+- empêchent la mise en cache de la réponse ;
+- transmettent un nom de fichier au navigateur ;
+- sont accessibles depuis le détail d’un audit.
+
+### 14.1 Export CSV
+
+L’export CSV :
+
 - est encodé en UTF-8 avec BOM ;
 - utilise `;` comme séparateur ;
-- contient les évaluations, constats, preuves et recommandations ;
-- est téléchargé par le frontend.
+- contient les évaluations, statuts, constats, preuves et recommandations ;
+- reste compatible avec Microsoft Excel.
 
-Chaque export réussi génère un événement `AuditExported`.
+### 14.2 Rapport PDF
+
+Le rapport PDF est généré dans la couche Infrastructure avec `QuestPDF`.
+
+Il présente :
+
+- les informations générales de l’audit ;
+- le score et la synthèse de conformité ;
+- le tableau des règles CIS évaluées ;
+- le détail des non-conformités ;
+- la sévérité et le nombre de constats ;
+- les recommandations ;
+- les preuves collectées dans un format lisible ;
+- un en-tête, un pied de page et une pagination.
+
+La génération retourne directement le document sous forme d’un tableau d’octets. Aucun fichier temporaire n’est créé sur le serveur.
+
+Chaque export réussi génère un événement `AuditExported` précisant le format utilisé.
 
 ## 15. Journalisation
 
@@ -500,9 +528,10 @@ Les tests d’intégration utilisent :
 
 Ils vérifient notamment :
 
-- export sans JWT ;
+- exports sans JWT ;
 - export CSV valide ;
-- audit inconnu ;
+- export PDF valide ;
+- export d’un audit inconnu ;
 - journal d’un audit ;
 - journal global sans JWT ;
 - refus du rôle `Auditor` ;
@@ -511,7 +540,7 @@ Ils vérifient notamment :
 État validé :
 
 ```text
-9 tests réussis
+12 tests réussis
 0 test échoué
 ```
 

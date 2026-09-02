@@ -20,7 +20,7 @@ Les principales fonctionnalités sont opérationnelles :
 - règles CIS Controls 5 et 6 ;
 - score de conformité ;
 - preuves et recommandations ;
-- export CSV compatible Excel ;
+- export CSV compatible Excel et rapport PDF détaillé ;
 - journal propre à chaque audit ;
 - journal d’activité global réservé aux administrateurs ;
 - interface React ;
@@ -95,6 +95,7 @@ Les collecteurs sont séparés du backend :
 | Persistance      | Entity Framework Core 10, Npgsql |
 | Base de données  | PostgreSQL                       |
 | Frontend         | React 19, TypeScript 6, Vite 8   |
+| Génération PDF   | QuestPDF 2026.7.3                |
 | Collecteurs      | .NET 10                          |
 | Active Directory | LDAPS `636`                      |
 | Tests            | xUnit, `WebApplicationFactory`   |
@@ -383,7 +384,7 @@ L’interface contient :
 - identités ;
 - groupes et appartenances ;
 - rôles et affectations ;
-- export CSV ;
+- exports CSV et PDF ;
 - journal propre à chaque audit ;
 - gestion des utilisateurs ;
 - journal d’activité global administrateur.
@@ -413,22 +414,40 @@ Routes principales :
 | `/api/audits/{id}/roles`            | Rôles d’un audit                 |
 | `/api/audits/{id}/rule-evaluations` | Résultats CIS                    |
 | `GET /api/audits/{id}/export.csv`   | Export CSV                       |
+| `GET /api/audits/{id}/export.pdf`   | Rapport PDF détaillé             |
 | `GET /api/audits/{id}/logs`         | Journal d’un audit               |
 | `GET /api/audit-logs?limit=200`     | Journal global administrateur    |
 | `/api/application-users`            | Gestion des utilisateurs         |
 | `GET /api/health`                   | État de l’API                    |
 
-## Export CSV
+## Exports CSV et PDF
 
-Les résultats CIS peuvent être téléchargés depuis le détail d’un audit.
+Les résultats CIS peuvent être téléchargés depuis le détail d’un audit dans deux formats.
 
-L’export :
+### Export CSV
+
+L’export CSV :
 
 - nécessite un JWT ;
 - utilise UTF-8 avec BOM ;
 - utilise le séparateur `;` ;
 - contient les règles, statuts, constats, preuves et recommandations ;
 - est compatible avec Microsoft Excel.
+
+### Rapport PDF
+
+Le rapport PDF est généré avec QuestPDF. Il contient :
+
+- les informations générales de l’audit ;
+- le score et la synthèse de conformité ;
+- le tableau des règles CIS évaluées ;
+- le détail des non-conformités ;
+- la sévérité et le nombre de constats ;
+- les recommandations ;
+- les preuves collectées sous une forme lisible ;
+- un en-tête et une pagination.
+
+Les deux formats sont générés par l’API puis téléchargés depuis l’interface React.
 
 ## Journalisation
 
@@ -452,7 +471,7 @@ Les événements actuellement enregistrés comprennent :
 - démarrage d’un audit ;
 - finalisation d’un audit ;
 - évaluation des règles ;
-- export CSV.
+- export CSV et PDF.
 
 ## Vérification du projet
 
