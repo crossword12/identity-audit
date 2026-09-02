@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Download,
   FileSearch,
+  FileText,
   KeyRound,
   LoaderCircle,
   Network,
@@ -16,7 +17,11 @@ import {
   ScrollText,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { exportAuditCsv, getAuditById } from "../../api/auditsApi";
+import {
+  exportAuditCsv,
+  exportAuditPdf,
+  getAuditById,
+} from "../../api/auditsApi";
 import {
   evaluateAuditRules,
   getAuditRuleEvaluations,
@@ -198,6 +203,26 @@ function getEvidenceTitle(record: EvidenceRecord, index: number): string {
     : `Constat ${index + 1}`;
 }
 
+function downloadFile(content: Blob, fileName: string): void {
+  const downloadUrl = URL.createObjectURL(content);
+
+  const link = document.createElement("a");
+
+  try {
+    link.href = downloadUrl;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+  } finally {
+    link.remove();
+
+    window.setTimeout(() => {
+      URL.revokeObjectURL(downloadUrl);
+    }, 1000);
+  }
+}
+
 function AuditDetailsPage() {
   const navigate = useNavigate();
   const { auditId } = useParams<{ auditId: string }>();
@@ -209,6 +234,7 @@ function AuditDetailsPage() {
   const [loading, setLoading] = useState(true);
   const [evaluating, setEvaluating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [error, setError] = useState("");
   const [evaluationError, setEvaluationError] = useState("");
   const [exportError, setExportError] = useState("");
@@ -285,26 +311,31 @@ function AuditDetailsPage() {
       setExportError("");
 
       const result = await exportAuditCsv(audit.id);
-      const downloadUrl = URL.createObjectURL(result.content);
-      const link = document.createElement("a");
 
-      try {
-        link.href = downloadUrl;
-        link.download = result.fileName;
-
-        document.body.appendChild(link);
-        link.click();
-      } finally {
-        link.remove();
-
-        window.setTimeout(() => {
-          URL.revokeObjectURL(downloadUrl);
-        }, 1000);
-      }
+      downloadFile(result.content, result.fileName);
     } catch {
-      setExportError("Impossible d’exporter les résultats de l’audit.");
+      setExportError("Impossible d’exporter les résultats au format CSV.");
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleExportPdf() {
+    if (!audit) {
+      return;
+    }
+
+    try {
+      setExportingPdf(true);
+      setExportError("");
+
+      const result = await exportAuditPdf(audit.id);
+
+      downloadFile(result.content, result.fileName);
+    } catch {
+      setExportError("Impossible de générer le rapport PDF.");
+    } finally {
+      setExportingPdf(false);
     }
   }
 
@@ -410,21 +441,39 @@ function AuditDetailsPage() {
           (evaluations.length > 0 || audit.status === "Running") && (
             <div className="audit-details-actions">
               {evaluations.length > 0 && (
-                <button
-                  className="export-csv-button"
-                  type="button"
-                  disabled={exporting}
-                  aria-busy={exporting}
-                  onClick={() => void handleExportCsv()}
-                >
-                  {exporting ? (
-                    <LoaderCircle className="audit-detail-spin" size={18} />
-                  ) : (
-                    <Download size={18} />
-                  )}
+                <>
+                  <button
+                    className="export-button"
+                    type="button"
+                    disabled={exportingPdf || exporting}
+                    aria-busy={exportingPdf}
+                    onClick={() => void handleExportPdf()}
+                  >
+                    {exportingPdf ? (
+                      <LoaderCircle className="audit-detail-spin" size={18} />
+                    ) : (
+                      <FileText size={18} />
+                    )}
 
-                  {exporting ? "Exportation..." : "Exporter en CSV"}
-                </button>
+                    {exportingPdf ? "Génération..." : "Exporter en PDF"}
+                  </button>
+
+                  <button
+                    className="export-button"
+                    type="button"
+                    disabled={exporting || exportingPdf}
+                    aria-busy={exporting}
+                    onClick={() => void handleExportCsv()}
+                  >
+                    {exporting ? (
+                      <LoaderCircle className="audit-detail-spin" size={18} />
+                    ) : (
+                      <Download size={18} />
+                    )}
+
+                    {exporting ? "Exportation..." : "Exporter en CSV"}
+                  </button>
+                </>
               )}
 
               {audit.status === "Running" && (

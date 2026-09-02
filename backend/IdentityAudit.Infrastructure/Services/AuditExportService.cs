@@ -3,6 +3,9 @@ using System.Text;
 using IdentityAudit.Application.AuditExports;
 using IdentityAudit.Application.Audits;
 using IdentityAudit.Application.RuleEvaluations;
+using IdentityAudit.Infrastructure.Exports;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 
 namespace IdentityAudit.Infrastructure.Services;
 
@@ -91,6 +94,51 @@ public sealed class AuditExportService : IAuditExportService
 
         return AuditCsvExportResult.Success(
             EncodeWithUtf8Bom(csv.ToString()),
+            fileName);
+    }
+
+    public async Task<AuditPdfExportResult> ExportPdfAsync(
+    Guid auditId,
+    CancellationToken cancellationToken = default)
+    {
+        var audit = await _auditService.GetByIdAsync(
+            auditId,
+            cancellationToken);
+
+        if (audit is null)
+        {
+            return AuditPdfExportResult.Failure(
+                "L'audit demandé est introuvable.");
+        }
+
+        var evaluations =
+            await _ruleEvaluationService.GetByAuditAsync(
+                auditId,
+                cancellationToken);
+
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var orderedEvaluations =
+            evaluations
+                .OrderBy(evaluation => evaluation.RuleCode)
+                .ToArray();
+
+        QuestPDF.Settings.License =
+            LicenseType.Community;
+
+        var document = new AuditPdfDocument(
+            audit,
+            orderedEvaluations,
+            DateTimeOffset.UtcNow);
+
+        var content =
+            document.GeneratePdf();
+
+        var fileName =
+            $"audit-{audit.Id:N}-rapport.pdf";
+
+        return AuditPdfExportResult.Success(
+            content,
             fileName);
     }
 

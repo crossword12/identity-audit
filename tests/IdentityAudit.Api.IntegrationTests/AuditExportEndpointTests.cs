@@ -120,6 +120,97 @@ public sealed class AuditExportEndpointTests
             response.StatusCode);
     }
 
+    [Fact]
+    public async Task ExportPdf_WithoutAuthentication_ReturnsUnauthorized()
+    {
+        using var client = CreateClient();
+
+        var response = await client.GetAsync(
+            GetPdfExportUrl(
+                FakeAuditExportService.ExistingAuditId));
+
+        Assert.Equal(
+            HttpStatusCode.Unauthorized,
+            response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ExportPdf_WithAuditor_ReturnsDownloadablePdf()
+    {
+        using var client =
+            CreateAuthenticatedClient();
+
+        var response = await client.GetAsync(
+            GetPdfExportUrl(
+                FakeAuditExportService.ExistingAuditId));
+
+        Assert.Equal(
+            HttpStatusCode.OK,
+            response.StatusCode);
+
+        Assert.Equal(
+            "application/pdf",
+            response.Content.Headers.ContentType?.MediaType);
+
+        Assert.True(
+            response.Headers.CacheControl?.NoStore);
+
+        var expectedFileName =
+            $"audit-" +
+            $"{FakeAuditExportService.ExistingAuditId:N}" +
+            "-rapport.pdf";
+
+        var contentDisposition =
+            response.Content.Headers.ContentDisposition;
+
+        var receivedFileName =
+            contentDisposition?.FileNameStar
+            ?? contentDisposition?.FileName?.Trim('"');
+
+        Assert.Equal(
+            expectedFileName,
+            receivedFileName);
+
+        var content =
+            await response.Content.ReadAsByteArrayAsync();
+
+        Assert.True(content.Length >= 5);
+
+        Assert.Equal(
+            (byte)'%',
+            content[0]);
+
+        Assert.Equal(
+            (byte)'P',
+            content[1]);
+
+        Assert.Equal(
+            (byte)'D',
+            content[2]);
+
+        Assert.Equal(
+            (byte)'F',
+            content[3]);
+
+        Assert.Equal(
+            (byte)'-',
+            content[4]);
+    }
+
+    [Fact]
+    public async Task ExportPdf_WithUnknownAudit_ReturnsNotFound()
+    {
+        using var client =
+            CreateAuthenticatedClient();
+
+        var response = await client.GetAsync(
+            GetPdfExportUrl(Guid.NewGuid()));
+
+        Assert.Equal(
+            HttpStatusCode.NotFound,
+            response.StatusCode);
+    }
+
     private HttpClient CreateClient()
     {
         return _factory.CreateClient(
@@ -145,6 +236,11 @@ public sealed class AuditExportEndpointTests
         Guid auditId)
     {
         return $"/api/audits/{auditId}/export.csv";
+    }
+    private static string GetPdfExportUrl(
+    Guid auditId)
+    {
+        return $"/api/audits/{auditId}/export.pdf";
     }
 }
 
@@ -320,6 +416,10 @@ internal sealed class FakeAuditExportService
     private static readonly byte[] CsvContent =
         CreateCsvContent();
 
+    private static readonly byte[] PdfContent =
+    Encoding.ASCII.GetBytes(
+        "%PDF-1.4\n% Identity Audit integration test\n");
+
     public Task<AuditCsvExportResult> ExportCsvAsync(
         Guid auditId,
         CancellationToken cancellationToken = default)
@@ -335,6 +435,23 @@ internal sealed class FakeAuditExportService
             AuditCsvExportResult.Success(
                 CsvContent,
                 $"audit-{auditId:N}-resultats-cis.csv"));
+    }
+
+    public Task<AuditPdfExportResult> ExportPdfAsync(
+    Guid auditId,
+    CancellationToken cancellationToken = default)
+    {
+        if (auditId != ExistingAuditId)
+        {
+            return Task.FromResult(
+                AuditPdfExportResult.Failure(
+                    "Audit introuvable."));
+        }
+
+        return Task.FromResult(
+            AuditPdfExportResult.Success(
+                PdfContent,
+                $"audit-{auditId:N}-rapport.pdf"));
     }
 
     private static byte[] CreateCsvContent()

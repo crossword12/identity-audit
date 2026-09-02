@@ -37,14 +37,14 @@ export async function completeAudit(id: string): Promise<Audit> {
 
   return response.data;
 }
-export interface AuditCsvExport {
+export interface AuditFileExport {
   content: Blob;
   fileName: string;
 }
 
 function getExportFileName(
   contentDisposition: string | undefined,
-  auditId: string,
+  fallbackFileName: string,
 ): string {
   const utf8FileName = contentDisposition?.match(
     /filename\*=UTF-8''([^;]+)/i,
@@ -62,15 +62,12 @@ function getExportFileName(
     /filename="?([^";]+)"?/i,
   )?.[1];
 
-  return (
-    simpleFileName?.trim() ??
-    `audit-${auditId}-resultats-cis.csv`
-  );
+  return simpleFileName?.trim() ?? fallbackFileName;
 }
 
 export async function exportAuditCsv(
   id: string,
-): Promise<AuditCsvExport> {
+): Promise<AuditFileExport> {
   const response = await httpClient.get<Blob>(
     `/api/audits/${id}/export.csv`,
     {
@@ -85,7 +82,29 @@ export async function exportAuditCsv(
     content: response.data,
     fileName: getExportFileName(
       response.headers["content-disposition"],
-      id,
+      `audit-${id}-resultats-cis.csv`,
+    ),
+  };
+}
+
+export async function exportAuditPdf(
+  id: string,
+): Promise<AuditFileExport> {
+  const response = await httpClient.get<Blob>(
+    `/api/audits/${id}/export.pdf`,
+    {
+      responseType: "blob",
+      headers: {
+        Accept: "application/pdf",
+      },
+    },
+  );
+
+  return {
+    content: response.data,
+    fileName: getExportFileName(
+      response.headers["content-disposition"],
+      `audit-${id}-rapport.pdf`,
     ),
   };
 }

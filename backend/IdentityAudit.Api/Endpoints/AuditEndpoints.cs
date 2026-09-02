@@ -28,6 +28,9 @@ public static class AuditEndpoints
         group.MapGet("/{id:guid}/export.csv", ExportCsvAsync)
             .WithName("ExportAuditCsv");
 
+        group.MapGet("/{id:guid}/export.pdf", ExportPdfAsync)
+            .WithName("ExportAuditPdf");
+
         group.MapGet("/{id:guid}/logs", GetLogsAsync)
             .WithName("GetAuditLogs")
             .Produces<IReadOnlyCollection<AuditLogDto>>(
@@ -245,6 +248,51 @@ public static class AuditEndpoints
         return Results.File(
             result.Content,
             contentType: "text/csv; charset=utf-8",
+            fileDownloadName: result.FileName);
+    }
+
+    private static async Task<IResult> ExportPdfAsync(
+    Guid id,
+    IAuditExportService auditExportService,
+    HttpContext httpContext,
+    ClaimsPrincipal principal,
+    IAuditLogService auditLogService,
+    CancellationToken cancellationToken)
+    {
+        var result =
+            await auditExportService.ExportPdfAsync(
+                id,
+                cancellationToken);
+
+        if (!result.Succeeded ||
+            result.Content is null ||
+            string.IsNullOrWhiteSpace(result.FileName))
+        {
+            return Results.NotFound(new
+            {
+                message = result.ErrorMessage
+                    ?? "L'export demandé est introuvable."
+            });
+        }
+
+        await auditLogService.RecordAsync(
+            id,
+            principal.GetApplicationUserId(),
+            AuditLogLevel.Information,
+            AuditLogEventTypes.AuditExported,
+            $"Rapport de l'audit {id} " +
+            "exporté au format PDF.",
+            cancellationToken);
+
+        httpContext.Response.Headers.CacheControl =
+            "no-store";
+
+        httpContext.Response.Headers.Pragma =
+            "no-cache";
+
+        return Results.File(
+            result.Content,
+            contentType: "application/pdf",
             fileDownloadName: result.FileName);
     }
 }

@@ -81,7 +81,7 @@
   flex-wrap: wrap;
 }
 
-.export-csv-button {
+.export-button {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,11 +95,11 @@
   cursor: pointer;
 }
 
-.export-csv-button:hover:not(:disabled) {
+.export-button:hover:not(:disabled) {
   background: #eff6ff;
 }
 
-.export-csv-button:disabled {
+.export-button:disabled {
   cursor: wait;
   opacity: 0.7;
 }
@@ -595,6 +595,28 @@
     gap: 3px;
   }
 
+  .export-pdf-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-primary);
+    border-radius: 8px;
+    background: var(--color-primary);
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .export-pdf-button:hover:not(:disabled) {
+    background: #193f62;
+  }
+
+  .export-pdf-button:disabled {
+    cursor: wait;
+    opacity: 0.7;
+  }
   .audit-details-actions {
     width: 100%;
     align-items: stretch;
