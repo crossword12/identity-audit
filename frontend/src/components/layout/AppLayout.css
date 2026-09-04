@@ -24,25 +24,29 @@
   border-bottom: 1px solid rgb(255 255 255 / 18%);
 }
 
-.brand-icon {
-  display: grid;
-  width: 42px;
-  height: 42px;
-  place-items: center;
-  border-radius: 11px;
-  background: var(--color-primary);
+.brand-icon-image {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
-.brand strong,
-.brand span {
+.brand-text {
+  min-width: 0;
+}
+
+.brand-text strong,
+.brand-text span {
   display: block;
 }
 
-.brand strong {
+.brand-text strong {
+  color: #fff;
   font-size: 16px;
 }
 
-.brand span {
+.brand-text span {
   margin-top: 3px;
   color: #d5e2ee;
   font-size: 12px;

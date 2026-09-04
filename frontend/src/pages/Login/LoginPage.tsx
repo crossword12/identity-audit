@@ -7,7 +7,6 @@ import {
   LockKeyhole,
   LogIn,
   Mail,
-  ShieldCheck,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
@@ -94,13 +93,13 @@ function LoginPage() {
     <main className="login-page">
       <section className="login-container">
         <header className="login-brand">
-          <div className="login-brand-shield">
-            <ShieldCheck size={42} />
+          <div className="login-brand-logo-container">
+            <img
+              className="login-brand-logo"
+              src="/identity-audit-logo.png"
+              alt="Identity Audit"
+            />
           </div>
-
-          <h1>
-            Identity <span>Audit</span>
-          </h1>
 
           <p>CIS Controls 5 &amp; 6</p>
         </header>

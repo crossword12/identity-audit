@@ -5,7 +5,6 @@ import {
   ScanSearch,
   ScrollText,
   Server,
-  ShieldCheck,
   Users,
 } from "lucide-react";
 import { useAuth } from "../../auth/useAuth";
@@ -50,11 +49,14 @@ function AppLayout() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon">
-            <ShieldCheck size={25} />
-          </div>
+          <img
+            className="brand-icon-image"
+            src="/identity-audit-icon.png"
+            alt=""
+            aria-hidden="true"
+          />
 
-          <div>
+          <div className="brand-text">
             <strong>Identity Audit</strong>
             <span>CIS Controls 5 &amp; 6</span>
           </div>
@@ -108,10 +110,10 @@ function AppLayout() {
           </div>
 
           <div className="topbar-actions">
-            <div className="security-status">
+            {/* <div className="security-status">
               <ShieldCheck size={18} />
               Système sécurisé
-            </div>
+            </div> */}
 
             {user && (
               <div className="user-account">

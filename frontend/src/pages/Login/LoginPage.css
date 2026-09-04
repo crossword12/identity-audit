@@ -50,28 +50,16 @@
   color: #fff;
 }
 
-.login-brand-shield {
-  display: grid;
-  width: 72px;
-  height: 72px;
-  margin: 0 auto 14px;
-  place-items: center;
-  border: 1px solid rgb(255 255 255 / 25%);
-  border-radius: 20px;
-  background: rgb(255 255 255 / 10%);
-  box-shadow: 0 14px 35px rgb(0 0 0 / 16%);
+.login-brand-logo-container {
+  width: min(100%, 330px);
+  margin: 0 auto 10px;
 }
 
-.login-brand h1 {
-  margin: 0;
-  color: #fff;
-  font-size: 37px;
-  line-height: 1.15;
-  letter-spacing: -1px;
-}
-
-.login-brand h1 span {
-  color: #61a9eb;
+.login-brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: brightness(0) invert(1);
 }
 
 .login-brand p {
