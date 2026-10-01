@@ -22,6 +22,24 @@ Le projet permet de collecter, centraliser et analyser les comptes, groupes, rô
 > Les données Microsoft Entra ID incluses dans ce repository sont des données de démonstration simulées.  
 > Aucun tenant, utilisateur, mot de passe, token ou secret réel n’est publié dans ce projet.
 
+## 🖥️ Aperçu de l'application
+
+### Dashboard
+
+![Dashboard Identity Audit](docs/images/dashboard.png)
+
+### Gestion des cibles
+
+![Gestion des cibles](docs/images/cibles.png)
+
+### Audits
+
+![Audits](docs/images/audits.png)
+
+### Génération des rapports
+
+![Export PDF](docs/images/export-pdf.png)
+
 ## État du projet
 
 Les principales fonctionnalités sont opérationnelles :
@@ -46,11 +64,15 @@ Les principales fonctionnalités sont opérationnelles :
 
 ## Limite actuelle
 
-Le collecteur Microsoft Entra ID fonctionne avec des réponses Microsoft Graph simulées, car aucun tenant Entra ID réel n’est actuellement disponible.
+Le collecteur Microsoft Entra ID a été validé à partir de données simulées reproduisant la structure des réponses Microsoft Graph.
 
-Le collecteur Active Directory a été testé avec un domaine réel de laboratoire en **LDAPS sur le port `636`**.
+La collecte directe depuis un tenant Microsoft Entra ID réel ainsi que l’authentification via une App Registration n’ont pas encore été validées.
 
-## Architecture générale
+Le collecteur Active Directory a, quant à lui, été testé de bout en bout sur un domaine réel de laboratoire via LDAPS sur le port `636`.
+
+## Architecture générale du projet
+
+Le schéma suivant représente l’architecture fonctionnelle utilisée pendant le développement et les tests en laboratoire.
 
 ```mermaid
 flowchart TB
@@ -86,7 +108,8 @@ Windows
 └── connexion au contrôleur de domaine avec LDAPS 636
 ```
 
-L’utilisation de HTTP entre Windows et le Mac est limitée au laboratoire isolé. Un déploiement réel devra utiliser HTTPS.
+Cette architecture correspond à l’environnement de développement et de validation en laboratoire.  
+Dans l’environnement de déploiement final, les accès externes sont sécurisés par HTTPS via Nginx.
 
 ## Architecture du backend
 
@@ -103,6 +126,21 @@ Les collecteurs sont séparés du backend :
 - `collectors/mock-collector` : données de démonstration ;
 - `collectors/entra-id` : collecte Microsoft Graph simulée ;
 - `collectors/active-directory` : collecte Active Directory réelle.
+
+## 🏗️ Architecture et déploiement
+
+Identity Audit a été déployé dans un environnement Linux avec :
+
+- **Nginx** comme serveur web et reverse proxy ;
+- **HTTPS/TLS** pour sécuriser les communications externes ;
+- **ASP.NET Core** exécuté comme service `systemd` ;
+- **PostgreSQL** pour la persistance des données ;
+- un backend accessible uniquement localement derrière Nginx ;
+- un démarrage automatique des services après redémarrage.
+
+### Architecture de déploiement
+
+![Architecture de déploiement](docs/diagrams/architecture-deploiement.png)
 
 ## Stack technique
 
@@ -509,7 +547,7 @@ tests/IdentityAudit.Api.IntegrationTests/IdentityAudit.Api.IntegrationTests.cspr
 Résultat validé :
 
 ```text
-9 tests réussis
+12 tests réussis
 0 test échoué
 ```
 
@@ -537,8 +575,11 @@ Les documents techniques se trouvent dans `docs/` :
 
 ## Évolutions possibles
 
-- connexion à un tenant Microsoft Entra ID réel ;
-- utilisation de HTTPS entre tous les composants ;
-- ajout d’événements administratifs supplémentaires au journal global ;
+- connexion et validation du collecteur sur un **tenant Microsoft Entra ID réel** ;
+- extension du catalogue de règles d’audit CIS ;
+- automatisation et planification périodique des audits ;
+- exploitation de l’historique pour suivre l’évolution du score de conformité ;
+- ajout de tests unitaires, end-to-end et de charge ;
 - pagination serveur du journal d’activité ;
-- automatisation du déploiement.
+- enrichissement des événements administratifs journalisés ;
+- automatisation du déploiement et évolution vers un environnement de production.
