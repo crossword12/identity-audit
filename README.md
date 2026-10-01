@@ -1,8 +1,26 @@
-# Identity Audit
+# 🔐 Identity Audit
 
-Plateforme d’audit des identités et des privilèges alignée sur les **CIS Controls 5 et 6**.
+Plateforme d’audit des **identités et des privilèges** basée sur les **CIS Controls 5 et 6**, conçue pour Microsoft Entra ID et Active Directory On-Premise.
 
-Identity Audit collecte, centralise et analyse les comptes, groupes, rôles et privilèges provenant de Microsoft Entra ID et d’Active Directory On-Premise.
+Le projet permet de collecter, centraliser et analyser les comptes, groupes, rôles et privilèges afin d’identifier les configurations à risque et d’évaluer leur conformité.
+
+## 🎯 Objectifs du projet
+
+- auditer les identités et les privilèges ;
+- détecter les comptes et rôles à risque ;
+- analyser les groupes et appartenances ;
+- évaluer la conformité aux **CIS Controls 5 et 6** ;
+- centraliser les résultats dans une interface web ;
+- générer des rapports CSV et PDF ;
+- conserver un historique des audits.
+
+## 🛠️ Technologies principales
+
+`ASP.NET Core 10` · `C#` · `React` · `TypeScript` · `PostgreSQL` · `Entity Framework Core` · `Active Directory` · `Microsoft Entra ID` · `JWT` · `RBAC` · `Nginx` · `Linux`
+
+> **Note**
+> Les données Microsoft Entra ID incluses dans ce repository sont des données de démonstration simulées.  
+> Aucun tenant, utilisateur, mot de passe, token ou secret réel n’est publié dans ce projet.
 
 ## État du projet
 
